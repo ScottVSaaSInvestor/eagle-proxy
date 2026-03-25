@@ -1,0 +1,11 @@
+{
+  "name": "eagle-vision-proxy",
+  "version": "1.0.0",
+  "description": "Anthropic API proxy for Eagle Vision",
+  "main": "api/anthropic.js",
+  "scripts": {
+    "dev": "vercel dev"
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}
