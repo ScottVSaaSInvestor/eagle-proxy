@@ -1,0 +1,2560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Eagle Vision v6 — AQL Growth</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#03080f;--s1:#060e18;--s2:#091421;--s3:#0d1b2a;--s4:#112035;
+  --bdr:rgba(0,212,180,0.08);--bdrm:rgba(0,212,180,0.18);--bdrb:rgba(0,212,180,0.35);
+  --teal:#00d4b4;--tealD:#008f7a;--tealF:rgba(0,212,180,0.06);
+  --muted:rgba(180,230,220,0.6);--faint:rgba(180,230,220,0.28);--vf:rgba(180,230,220,0.1);
+  --wht:#e6f2ee;
+  --amber:#f59e0b;--red:#ef4444;--blue:#3b82f6;--purple:#a78bfa;--green:#10b981;
+  --font:'DM Sans',sans-serif;--display:'Syne',sans-serif;--mono:'IBM Plex Mono',monospace;
+}
+html,body{height:100%;background:var(--bg);color:var(--wht);font-family:var(--font);overflow:hidden}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-thumb{background:rgba(0,212,180,0.15);border-radius:2px}
+.app{display:flex;height:100vh}
+
+/* SIDEBAR */
+.sidebar{width:220px;background:var(--s1);border-right:1px solid var(--bdr);display:flex;flex-direction:column;flex-shrink:0;overflow:hidden}
+.sb-logo{padding:20px 18px 16px;border-bottom:1px solid var(--bdr)}
+.sb-logo-mark{display:flex;align-items:center;gap:8px;margin-bottom:3px}
+.sb-eagle{width:28px;height:28px;position:relative}
+.sb-eagle svg{width:100%;height:100%}
+.sb-name{font-family:var(--display);font-size:16px;font-weight:800;letter-spacing:-0.3px}
+.sb-tag{font-size:9px;color:var(--faint);letter-spacing:2px;text-transform:uppercase;font-family:var(--mono)}
+.sb-version{font-size:9px;color:var(--teal);letter-spacing:1px;font-family:var(--mono);margin-top:2px}
+.sb-nav{flex:1;padding:12px 0;overflow-y:auto}
+.nav-section{margin-bottom:4px}
+.nav-label{font-size:9px;color:var(--vf);letter-spacing:2px;text-transform:uppercase;font-family:var(--mono);padding:8px 18px 4px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:8px 18px;cursor:pointer;transition:all 0.15s;border-left:2px solid transparent;font-size:13px;color:var(--faint);font-weight:500}
+.nav-item:hover{color:var(--wht);background:rgba(0,212,180,0.04);border-left-color:rgba(0,212,180,0.3)}
+.nav-item.active{color:var(--teal);background:rgba(0,212,180,0.07);border-left-color:var(--teal)}
+.nav-icon{font-size:14px;width:18px;text-align:center;flex-shrink:0}
+.nav-badge{margin-left:auto;font-size:9px;font-family:var(--mono);background:rgba(0,212,180,0.1);color:var(--teal);padding:2px 6px;border-radius:4px}
+.sb-footer{padding:14px 18px;border-top:1px solid var(--bdr)}
+.sb-user{display:flex;align-items:center;gap:8px}
+.sb-avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--teal),#005f52);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#03080f;font-family:var(--display);flex-shrink:0}
+.sb-uname{font-size:12px;font-weight:600;color:var(--muted)}
+.sb-role{font-size:10px;color:var(--faint);font-family:var(--mono)}
+
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{height:52px;background:var(--s1);border-bottom:1px solid var(--bdr);display:flex;align-items:center;padding:0 24px;gap:16px;flex-shrink:0}
+.tb-title{font-family:var(--display);font-size:15px;font-weight:700;flex:1}
+.tb-search{display:flex;align-items:center;gap:8px;background:var(--s2);border:1px solid var(--bdr);border-radius:8px;padding:6px 12px;gap:8px;min-width:220px}
+.tb-search input{background:none;border:none;outline:none;color:var(--wht);font-size:12px;font-family:var(--font);width:100%}
+.tb-search input::placeholder{color:var(--faint)}
+.tb-search-icon{font-size:12px;color:var(--faint)}
+.tb-btn{padding:6px 14px;border-radius:7px;border:1px solid var(--bdrm);background:none;color:var(--teal);font-size:11px;font-weight:700;cursor:pointer;font-family:var(--display);letter-spacing:0.3px;transition:all 0.15s}
+.tb-btn:hover{background:var(--tealF)}
+.tb-btn.primary{background:linear-gradient(135deg,var(--teal),var(--tealD));color:#03080f;border-color:transparent}
+.tb-btn.primary:hover{box-shadow:0 0 20px rgba(0,212,180,0.3)}
+.content{flex:1;overflow-y:auto;padding:20px 24px}
+
+/* VIEWS */
+.view{display:none}
+.view.active{display:block;animation:fadeUp 0.3s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+@keyframes glow{0%,100%{box-shadow:0 0 16px rgba(0,212,180,0.2)}50%{box-shadow:0 0 32px rgba(0,212,180,0.45)}}
+
+/* COMPANY GRID */
+.co-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:14px}
+.co-card{background:var(--s2);border:1px solid var(--bdr);border-radius:14px;overflow:hidden;cursor:pointer;transition:all 0.2s;position:relative}
+.co-card:hover{border-color:var(--bdrm);transform:translateY(-2px);box-shadow:0 8px 32px rgba(0,0,0,0.4)}
+.co-card-top{padding:16px 18px 12px}
+.co-card-hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
+.co-name{font-family:var(--display);font-size:16px;font-weight:800;letter-spacing:-0.3px}
+.co-vertical{font-size:10px;color:var(--faint);font-family:var(--mono);margin-top:2px;line-height:1.4}
+.co-badges{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px}
+.badge{padding:3px 8px;border-radius:5px;font-size:9px;font-weight:700;letter-spacing:0.5px;font-family:var(--mono);border:1px solid transparent}
+.badge.play1{background:rgba(0,212,180,0.12);color:#00d4b4;border-color:rgba(0,212,180,0.3)}
+.badge.play2{background:rgba(139,92,246,0.12);color:#8b5cf6;border-color:rgba(139,92,246,0.3)}
+
+/* FRAMEWORK SCORES DISPLAY */
+.fw-scores{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.fw-score-box{background:var(--s3);border:1px solid var(--bdr);border-radius:8px;padding:10px 12px}
+.fw-score-label{font-size:9px;color:var(--faint);font-family:var(--mono);letter-spacing:1px;margin-bottom:4px}
+.fw-score-val{font-family:var(--display);font-size:20px;font-weight:800;line-height:1}
+.fw-score-class{font-size:9px;color:var(--muted);margin-top:3px}
+
+.co-card-foot{padding:10px 18px;border-top:1px solid var(--bdr);display:flex;justify-content:space-between;align-items:center;background:rgba(0,0,0,0.15)}
+.co-meta{font-size:10px;color:var(--faint);font-family:var(--mono)}
+.co-actions{display:flex;gap:6px}
+.act-btn{padding:5px 12px;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer;font-family:var(--display);transition:all 0.15s;border:1px solid}
+.act-btn.primary{background:linear-gradient(135deg,var(--teal),var(--tealD));color:#03080f;border-color:transparent}
+.act-btn.primary:hover{box-shadow:0 0 14px rgba(0,212,180,0.4)}
+.act-btn.secondary{background:none;color:var(--muted);border-color:var(--bdr)}
+.act-btn.secondary:hover{border-color:var(--bdrm);color:var(--wht)}
+
+/* EMPTY STATE */
+.empty-state{text-align:center;padding:60px 20px}
+.empty-icon{font-size:48px;margin-bottom:16px;opacity:0.3}
+.empty-text{font-size:16px;font-weight:600;color:var(--muted);margin-bottom:6px}
+.empty-sub{font-size:12px;color:var(--faint)}
+
+/* PIPELINE MODAL */
+.modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(3,8,15,0.9);z-index:200;display:none;align-items:center;justify-content:center;backdrop-filter:blur(6px)}
+.modal-overlay.open{display:flex;animation:fadeUp 0.25s ease}
+.modal{width:720px;max-width:90vw;max-height:85vh;background:var(--s1);border:1px solid var(--bdrb);border-radius:16px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 20px 80px rgba(0,0,0,0.6)}
+.modal-head{padding:20px 24px;border-bottom:1px solid var(--bdr);background:linear-gradient(135deg,var(--s2),var(--s3))}
+.modal-title{font-family:var(--display);font-size:18px;font-weight:800;letter-spacing:-0.3px;margin-bottom:4px}
+.modal-sub{font-size:11px;color:var(--faint);font-family:var(--mono)}
+.modal-body{flex:1;overflow-y:auto;padding:20px 24px}
+.modal-foot{padding:16px 24px;border-top:1px solid var(--bdr);display:flex;gap:10px;justify-content:flex-end}
+
+/* PIPELINE INPUT */
+.pipe-input-group{margin-bottom:16px}
+.pipe-input-label{font-size:11px;color:var(--muted);font-weight:600;margin-bottom:6px;font-family:var(--mono)}
+.pipe-input{width:100%;padding:12px 14px;background:var(--s2);border:1px solid var(--bdr);border-radius:8px;color:var(--wht);font-size:14px;font-family:var(--font);outline:none;transition:all 0.15s}
+.pipe-input:focus{border-color:var(--bdrm);background:var(--s3)}
+.pipe-input::placeholder{color:var(--faint)}
+
+/* PIPELINE RUNNING STATE */
+.pipe-header{display:flex;align-items:center;gap:12px;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--bdr)}
+.pipe-header-icon{width:40px;height:40px;background:linear-gradient(135deg,var(--teal),var(--tealD));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.pipe-header-text{flex:1}
+.pipe-header-title{font-family:var(--display);font-size:15px;font-weight:800;letter-spacing:-0.2px}
+.pipe-header-sub{font-size:10px;color:var(--faint);font-family:var(--mono);margin-top:2px}
+
+.pipe-step-track{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
+.pipe-log{background:var(--s2);border:1px solid var(--bdr);border-radius:8px;padding:12px 14px;font-size:11px;font-family:var(--mono);line-height:1.6;max-height:200px;overflow-y:auto;white-space:pre-wrap;color:var(--muted)}
+
+/* SUCCESS STATE */
+.pipe-success{text-align:center;padding:20px}
+.pipe-success-icon{width:60px;height:60px;background:linear-gradient(135deg,#00d4b4,#008f7a);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 16px;animation:glow 2s infinite}
+.pipe-success-title{font-family:var(--display);font-size:18px;font-weight:800;margin-bottom:6px}
+.pipe-success-sub{font-size:12px;color:var(--muted);margin-bottom:16px}
+.pipe-url{font-size:11px;color:var(--teal);font-family:var(--mono);word-break:break-all;padding:10px 12px;background:rgba(0,212,180,0.05);border:1px solid rgba(0,212,180,0.15);border-radius:6px;margin-bottom:16px}
+.pipe-url a{color:var(--teal);text-decoration:none}
+.pipe-url a:hover{text-decoration:underline}
+
+/* ERROR STATE */
+.pipe-error{text-align:center;padding:20px}
+.pipe-error-icon{width:60px;height:60px;background:rgba(239,68,68,0.15);border:2px solid var(--red);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 16px;color:var(--red)}
+.pipe-error-title{font-family:var(--display);font-size:16px;font-weight:800;margin-bottom:6px;color:var(--red)}
+.pipe-error-msg{font-size:12px;color:var(--muted);margin-bottom:16px;font-family:var(--mono)}
+
+.generate-btn{width:100%;padding:12px;border-radius:10px;border:1px solid rgba(167,139,250,0.4);background:rgba(167,139,250,0.1);color:#a78bfa;font-size:13px;font-weight:800;font-family:var(--display);cursor:pointer;transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:8px}
+.generate-btn:hover{background:rgba(167,139,250,0.18);box-shadow:0 0 20px rgba(167,139,250,0.2)}
+.generate-btn-sub{font-size:9px;opacity:0.7;font-weight:500;margin-top:2px;font-family:var(--mono)}
+
+.detail-tab{padding:10px 20px;border:none;background:none;color:var(--muted);font-size:13px;font-weight:700;font-family:var(--display);cursor:pointer;border-bottom:2px solid transparent;transition:all 0.2s}
+.detail-tab:hover{color:var(--text);background:rgba(255,255,255,0.02)}
+.detail-tab.active{color:var(--teal);border-bottom-color:var(--teal)}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sb-logo">
+      <div class="sb-logo-mark">
+        <div class="sb-eagle">
+          <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M50 20L70 35L65 55L50 70L35 55L30 35L50 20Z" fill="url(#eagle-grad)" stroke="#00d4b4" stroke-width="2"/>
+            <circle cx="45" cy="40" r="3" fill="#03080f"/>
+            <circle cx="55" cy="40" r="3" fill="#03080f"/>
+            <path d="M40 50Q50 55 60 50" stroke="#03080f" stroke-width="2" stroke-linecap="round" fill="none"/>
+            <defs>
+              <linearGradient id="eagle-grad" x1="30" y1="20" x2="70" y2="70">
+                <stop offset="0%" stop-color="#00d4b4"/>
+                <stop offset="100%" stop-color="#008f7a"/>
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+        <div class="sb-name">EAGLE VISION</div>
+      </div>
+      <div class="sb-tag">AQL GROWTH</div>
+      <div class="sb-version">v6.0 · 4-FRAMEWORK</div>
+    </div>
+    <div class="sb-nav">
+      <div class="nav-section">
+        <div class="nav-label">INTELLIGENCE</div>
+        <div class="nav-item active" id="nav-companies" onclick="switchView('companies')">
+          <span class="nav-icon">📊</span>
+          <span>Companies</span>
+          <span class="nav-badge" id="nav-co-count">0</span>
+        </div>
+        <div class="nav-item" id="nav-pipeline" onclick="switchView('pipeline')">
+          <span class="nav-icon">🔬</span>
+          <span>Run Pipeline</span>
+        </div>
+      </div>
+    </div>
+    <div class="sb-footer">
+      <div class="sb-user">
+        <div class="sb-avatar">S</div>
+        <div style="flex:1">
+          <div class="sb-uname">Scott</div>
+          <div class="sb-role">Co-Founder</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="topbar">
+      <div class="tb-title" id="tb-title">Company Intelligence</div>
+      <div class="tb-search">
+        <span class="tb-search-icon">🔍</span>
+        <input type="text" placeholder="Search companies..." id="tb-search-input" oninput="handleSearch(this.value)">
+      </div>
+      <button class="tb-btn primary" onclick="showRunPipeline()">+ Add Company</button>
+    </div>
+    <div class="content">
+      <!-- COMPANIES VIEW -->
+      <div class="view active" id="view-companies">
+        <div class="co-grid" id="co-grid"></div>
+      </div>
+
+      <!-- PIPELINE VIEW -->
+      <div class="view" id="view-pipeline">
+        <div style="max-width:600px;margin:40px auto;text-align:center">
+          <div style="font-size:48px;margin-bottom:20px">🚀</div>
+          <div style="font-family:var(--display);font-size:24px;font-weight:800;margin-bottom:10px">Eagle Vision Pipeline</div>
+          <div style="font-size:14px;color:var(--muted);margin-bottom:30px">IC-grade research, dual-framework scoring, and Gamma Site generation</div>
+          <button class="tb-btn primary" style="padding:12px 24px;font-size:13px" onclick="showRunPipeline()">Start Pipeline</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PIPELINE MODAL -->
+<div class="modal-overlay" id="pipelineModal">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">Eagle Vision Pipeline</div>
+      <div class="modal-sub">Research · Route · Score · Generate IC Deck</div>
+    </div>
+    <div class="modal-body">
+      <!-- INPUT STATE -->
+      <div id="pipe-input-state">
+        <div class="pipe-input-group">
+          <div class="pipe-input-label">ANTHROPIC API KEY</div>
+          <input type="password" class="pipe-input" id="pipe-api-key" placeholder="sk-ant-..." style="font-family:var(--mono);font-size:12px">
+          <div style="font-size:10px;color:var(--faint);margin-top:4px">Get your API key from <a href="https://console.anthropic.com" target="_blank" style="color:var(--teal)">console.anthropic.com</a></div>
+        </div>
+        <div class="pipe-input-group">
+          <div class="pipe-input-label">COMPANY NAME</div>
+          <input type="text" class="pipe-input" id="pipe-company-input" placeholder="e.g., AxisCare, Hauler Hero, Swivl">
+        </div>
+        <div class="pipe-input-group">
+          <div class="pipe-input-label">COMPANY WEBSITE</div>
+          <input type="text" class="pipe-input" id="pipe-website-input" placeholder="e.g., axiscare.com (no https://)" onkeypress="if(event.key==='Enter')startPipeline()">
+          <div style="font-size:10px;color:var(--faint);margin-top:4px">Required to ensure we research the correct company</div>
+        </div>
+        <div class="pipe-input-group">
+          <div class="pipe-input-label">BUSINESS CONTEXT (OPTIONAL)</div>
+          <textarea class="pipe-input" id="pipe-context-input" rows="6" placeholder="Paste any context to improve accuracy:&#10;• Business description&#10;• Product details&#10;• Customer info&#10;• Market position&#10;• Anything else Claude should know upfront&#10;&#10;This helps guide research and scoring." style="resize:vertical;font-size:12px;line-height:1.5"></textarea>
+        </div>
+        <div style="font-size:11px;color:var(--faint);line-height:1.6;margin-bottom:20px">
+          <strong style="color:var(--muted)">Pipeline Steps:</strong><br>
+          • 6-module deep research (company + vertical)<br>
+          • Auto-route to Play 1 (SOR→SOA) or Play 2 (AI Wedge→SOA)<br>
+          • Dual-framework scoring (SAI + VAI)<br>
+          • IC-grade narrative generation<br>
+          • Gamma Site push (~35-40 slides)
+        </div>
+      </div>
+
+      <!-- RUNNING STATE -->
+      <div id="pipe-running-state" style="display:none">
+        <div class="pipe-header">
+          <div class="pipe-header-icon">🔬</div>
+          <div class="pipe-header-text">
+            <div class="pipe-header-title" id="pipe-running-title">Researching company...</div>
+            <div class="pipe-header-sub" id="pipe-co-label"></div>
+          </div>
+        </div>
+        <div class="pipe-step-track" id="pipe-step-track"></div>
+        <div class="pipe-log" id="pipe-log"></div>
+      </div>
+
+      <!-- SUCCESS STATE -->
+      <div id="pipe-success-state" style="display:none">
+        <div class="pipe-success">
+          <div class="pipe-success-icon">✓</div>
+          <div class="pipe-success-title">IC Deck Generated</div>
+          <div class="pipe-success-sub">Company scored and pushed to Gamma</div>
+          <div class="pipe-url" id="pipe-url"></div>
+          <button class="tb-btn primary" style="width:100%;padding:10px" onclick="openPipelineGamma()">Open Gamma Site ↗</button>
+        </div>
+      </div>
+
+      <!-- ERROR STATE -->
+      <div id="pipe-error-state" style="display:none">
+        <div class="pipe-error">
+          <div class="pipe-error-icon">✕</div>
+          <div class="pipe-error-title">Pipeline Failed</div>
+          <div class="pipe-error-msg" id="pipe-error-msg"></div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="act-btn secondary" onclick="closePipelineModal()">Close</button>
+      <button class="act-btn primary" id="pipe-start-btn" onclick="startPipeline()">Start Pipeline</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── CONFIGURATION ──
+// Vercel deployment URL configured for production
+const ANTHROPIC_PROXY_URL = 'https://project-gfln8.vercel.app/api/v1/messages';  
+// Production deployment: EFP49Q8TH
+
+// ── SAMPLE DATA (will be replaced by pipeline) ──
+let COMPANIES = [];
+
+// ── HELPERS ──
+const $ = id => document.getElementById(id);
+
+function switchView(v) {
+  document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  $('view-' + v).classList.add('active');
+  $('nav-' + v) && $('nav-' + v).classList.add('active');
+  const titles = {companies:'Company Intelligence',pipeline:'Run Pipeline'};
+  $('tb-title').textContent = titles[v] || v;
+}
+
+function handleSearch(q) {
+  const term = q.toLowerCase();
+  const filtered = term ? COMPANIES.filter(c => 
+    c.name.toLowerCase().includes(term) || 
+    c.vertical.toLowerCase().includes(term)
+  ) : COMPANIES;
+  renderGrid(filtered);
+}
+
+function renderGrid(cos) {
+  const el = $('co-grid');
+  if (!cos || !cos.length) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-text">No companies yet</div><div class="empty-sub">Click "+ Add Company" to run the pipeline</div></div>`;
+    return;
+  }
+  el.innerHTML = cos.map((co, idx) => renderCard(co, idx)).join('');
+}
+
+function renderCard(co, idx) {
+  const isPlay1 = co.play === 'Play1';
+  const sai = isPlay1 ? co.sai1 : co.sai2;
+  const vai = isPlay1 ? co.vai1 : co.vai2;
+  const saiMax = isPlay1 ? 100 : sai.max;
+  
+  return `<div class="co-card" onclick="showDetailPanel(${idx})">
+    <div class="co-card-top">
+      <div class="co-card-hdr">
+        <div>
+          <div class="co-name">${co.name}</div>
+          <div class="co-vertical">${co.vertical}</div>
+        </div>
+        <span class="badge ${isPlay1?'play1':'play2'}">${co.play}</span>
+      </div>
+      <div class="co-badges">
+        <span class="badge" style="background:rgba(0,212,180,0.1);color:var(--teal)">${sai.classification}</span>
+      </div>
+      <div class="fw-scores">
+        <div class="fw-score-box" style="border-left:3px solid var(--teal)">
+          <div class="fw-score-label">${isPlay1?'SAI 1.0':'SAI 2.0'}</div>
+          <div class="fw-score-val" style="color:var(--teal)">${sai.total}<span style="font-size:12px;color:var(--faint)">/${saiMax}</span></div>
+          <div class="fw-score-class">${sai.classification}</div>
+        </div>
+        <div class="fw-score-box" style="border-left:3px solid var(--purple)">
+          <div class="fw-score-label">${isPlay1?'VAI 1.0':'VAI 2.0'}</div>
+          <div class="fw-score-val" style="color:var(--purple)">${vai.total}<span style="font-size:12px;color:var(--faint)">/100</span></div>
+          <div class="fw-score-class">${vai.verticalClass || 'Vertical Score'}</div>
+        </div>
+      </div>
+    </div>
+    <div class="co-card-foot">
+      <div class="co-meta">
+        ${co.hq} · ${co.employees} · ${co.arr}
+        ${co.narrativeStatus === 'generating' ? '<br><span style="color:var(--amber);font-size:10px">⏳ Generating narratives...</span>' : ''}
+        ${co.narrativeStatus === 'complete' ? '<br><span style="color:var(--teal);font-size:10px">✓ Narratives ready</span>' : ''}
+        ${co.narrativeStatus === 'failed' ? '<br><span style="color:var(--red);font-size:10px">⚠ Narrative generation failed</span>' : ''}
+      </div>
+      <div class="co-actions">
+        ${co.gammaUrl
+          ? `<button class="act-btn primary" onclick="event.stopPropagation();window.open('${co.gammaUrl}','_blank')">Open Gamma ↗</button>`
+          : `<button class="act-btn secondary" onclick="event.stopPropagation()">View</button>`
+        }
+      </div>
+    </div>
+  </div>`;
+}
+
+function refreshGrid() {
+  renderGrid(COMPANIES);
+  $('nav-co-count').textContent = COMPANIES.length;
+}
+
+// ── PIPELINE ──
+const PIPE_STEPS = [
+  {id:'research', label:'Research', icon:'🔍', desc:'6 modules (company + vertical)'},
+  {id:'route',    label:'Route',    icon:'🧭', desc:'Play 1 vs Play 2'},
+  {id:'score',    label:'Score',    icon:'🧮', desc:'Dual framework (SAI + VAI)'},
+  {id:'narrative',label:'Narrative',icon:'📝', desc:'IC-grade content'},
+  {id:'gamma',    label:'Gamma',    icon:'🚀', desc:'Site generation'},
+];
+let pipeStepState = {};
+let pipelineGammaUrl = '';
+let ANTHROPIC_API_KEY = '';
+
+function showRunPipeline() {
+  $('pipe-input-state').style.display = 'block';
+  $('pipe-running-state').style.display = 'none';
+  $('pipe-success-state').style.display = 'none';
+  $('pipe-error-state').style.display = 'none';
+  $('pipe-company-input').value = '';
+  $('pipe-website-input').value = '';
+  $('pipe-context-input').value = '';
+  $('pipe-start-btn').style.display = 'block';
+  
+  // Load saved API key if available
+  const savedKey = localStorage.getItem('eagle_vision_api_key');
+  if (savedKey) {
+    $('pipe-api-key').value = savedKey;
+    ANTHROPIC_API_KEY = savedKey;
+  }
+  
+  $('pipelineModal').classList.add('open');
+  setTimeout(()=> {
+    if (!savedKey) {
+      $('pipe-api-key').focus();
+    } else {
+      $('pipe-company-input').focus();
+    }
+  }, 200);
+}
+
+function closePipelineModal() {
+  $('pipelineModal').classList.remove('open');
+}
+
+function openPipelineGamma() {
+  if (pipelineGammaUrl) {
+    window.open(pipelineGammaUrl, '_blank');
+  } else {
+    window.open('https://gamma.app', '_blank');
+  }
+}
+
+function pipeLog(msg, color) {
+  const el = $('pipe-log');
+  el.innerHTML += `\n<span style="color:${color||'var(--muted)'}">▸ ${msg}</span>`;
+  el.scrollTop = el.scrollHeight;
+}
+
+function setPipeStep(stepId, status) {
+  pipeStepState[stepId] = status;
+  const track = $('pipe-step-track');
+  track.innerHTML = PIPE_STEPS.map(s => {
+    const st = pipeStepState[s.id] || 'pending';
+    const col = st==='done'?'#00d4b4':st==='active'?'#3b82f6':st==='error'?'#ef4444':'rgba(255,255,255,0.1)';
+    const icon = st==='done'?'✓':st==='error'?'✕':st==='active'?'◉':s.icon;
+    return `<div style="display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:7px;background:${st==='active'?'rgba(59,130,246,0.07)':'transparent'}">
+      <div style="width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;background:${st!=='pending'?col+'22':'transparent'};border:1px solid ${col};color:${col};flex-shrink:0;font-weight:700">${icon}</div>
+      <div style="flex:1">
+        <div style="font-size:11px;font-weight:600;color:${st==='pending'?'var(--faint)':col}">${s.label}</div>
+        <div style="font-size:9px;color:var(--faint);font-family:var(--mono)">${s.desc}</div>
+      </div>
+      ${st==='active'?`<div style="width:12px;height:12px;border:1.5px solid rgba(59,130,246,0.3);border-top-color:#3b82f6;border-radius:50%;animation:spin 0.8s linear infinite;flex-shrink:0"></div>`:''}
+    </div>`;
+  }).join('');
+}
+
+async function startPipeline() {
+  console.log('startPipeline() called');
+  
+  try {
+    const apiKey = $('pipe-api-key').value.trim();
+    const companyName = $('pipe-company-input').value.trim();
+    const companyWebsite = $('pipe-website-input').value.trim();
+    
+    console.log('API key length:', apiKey.length);
+    console.log('Company name:', companyName);
+    console.log('Company website:', companyWebsite);
+    
+    if (!apiKey) {
+      alert('Please enter your Anthropic API key');
+      $('pipe-api-key').focus();
+      return;
+    }
+    if (!apiKey.startsWith('sk-ant-')) {
+      alert('API key should start with "sk-ant-"');
+      $('pipe-api-key').focus();
+      return;
+    }
+    if (!companyName) {
+      alert('Please enter a company name');
+      $('pipe-company-input').focus();
+      return;
+    }
+    if (!companyWebsite) {
+      alert('Please enter company website (e.g., axiscare.com)');
+      $('pipe-website-input').focus();
+      return;
+    }
+
+    // Store API key globally and save to localStorage
+    ANTHROPIC_API_KEY = apiKey;
+    localStorage.setItem('eagle_vision_api_key', apiKey);
+    console.log('API key stored');
+
+    const businessContext = $('pipe-context-input').value.trim();
+
+    $('pipe-input-state').style.display = 'none';
+    $('pipe-running-state').style.display = 'block';
+    $('pipe-start-btn').style.display = 'none';
+    $('pipe-co-label').textContent = companyName + ' · Eagle Vision v6';
+    $('pipe-running-title').textContent = 'Researching ' + companyName + '…';
+    $('pipe-log').innerHTML = `<span style="color:var(--teal)">▶</span> Pipeline started for <strong style="color:var(--wht)">${companyName}</strong>`;
+    if (businessContext) {
+      pipeLog('Business context provided (' + Math.round(businessContext.length/100)*100 + ' chars)', 'var(--teal)');
+    }
+    pipeStepState = {};
+    PIPE_STEPS.forEach(s => pipeStepState[s.id] = 'pending');
+    setPipeStep('research','active');
+    console.log('UI updated, starting pipeline execution');
+    
+    // Continue with actual pipeline execution
+    await runPipelineExecution(companyName, companyWebsite, businessContext);
+    
+  } catch (err) {
+    console.error('startPipeline error:', err);
+    alert('Error starting pipeline: ' + err.message);
+  }
+}
+
+async function runPipelineExecution(companyName, companyWebsite, businessContext) {
+  try {
+    // ── ENHANCED BUSINESS CONTEXT WITH WEBSITE ──
+    let enhancedContext = businessContext || '';
+    if (companyWebsite) {
+      enhancedContext = `Company website: ${companyWebsite}\n\n${enhancedContext}`;
+      pipeLog(`Website provided: ${companyWebsite}`, 'var(--muted)');
+    }
+    
+    // ── STEP 1: 6-MODULE RESEARCH ──
+    pipeLog('Launching 6 research modules (3 pairs: company + vertical)…', 'var(--teal)');
+    
+    const timeout55 = (label) => new Promise((_,rej) => setTimeout(() => rej(new Error(label + ' timeout (55s)')), 55000));
+
+    // Module prompts (enhanced for v6)
+    const mod1Prompt = buildModule1Prompt(companyName, enhancedContext);
+    const mod2Prompt = buildModule2Prompt(companyName, enhancedContext);
+    const mod3Prompt = buildModule3Prompt(companyName, enhancedContext);
+    const mod4Prompt = buildModule4Prompt(companyName, enhancedContext);
+    const mod5Prompt = buildModule5Prompt(companyName, enhancedContext);
+    const mod6Prompt = buildModule6Prompt(companyName, enhancedContext);
+
+    pipeLog('Pair 1/2: Company overview + Customer evidence + AI signals…', 'var(--teal)');
+    const [mod1Raw, mod2Raw, mod3Raw] = await Promise.all([
+      Promise.race([callClaude(mod1Prompt, 1500, false), timeout55('Module 1')]).catch(e => { pipeLog('Module 1 warn: ' + e.message, 'var(--amber)'); return ''; }),
+      Promise.race([callClaude(mod2Prompt, 1500, false), timeout55('Module 2')]).catch(e => { pipeLog('Module 2 warn: ' + e.message, 'var(--amber)'); return ''; }),
+      Promise.race([callClaude(mod3Prompt, 1500, false), timeout55('Module 3')]).catch(e => { pipeLog('Module 3 warn: ' + e.message, 'var(--amber)'); return ''; })
+    ]);
+
+    pipeLog('Pair 2/2: Technical architecture + Vertical market + Competitive intel…', 'var(--teal)');
+    const [mod4Raw, mod5Raw, mod6Raw] = await Promise.all([
+      Promise.race([callClaude(mod4Prompt, 1500, false), timeout55('Module 4')]).catch(e => { pipeLog('Module 4 warn: ' + e.message, 'var(--amber)'); return ''; }),
+      Promise.race([callClaude(mod5Prompt, 1500, false), timeout55('Module 5')]).catch(e => { pipeLog('Module 5 warn: ' + e.message, 'var(--amber)'); return ''; }),
+      Promise.race([callClaude(mod6Prompt, 1500, false), timeout55('Module 6')]).catch(e => { pipeLog('Module 6 warn: ' + e.message, 'var(--amber)'); return ''; })
+    ]);
+
+    const modsDone = [mod1Raw, mod2Raw, mod3Raw, mod4Raw, mod5Raw, mod6Raw].filter(m => m.length > 0).length;
+    pipeLog(`${modsDone}/6 modules complete — building evidence pack…`, '#00d4b4');
+
+    const researchRaw = [
+      mod1Raw ? `=== MODULE 1: COMPANY OVERVIEW ===\n${mod1Raw}` : '',
+      mod2Raw ? `\n\n=== MODULE 2: CUSTOMER EVIDENCE ===\n${mod2Raw}` : '',
+      mod3Raw ? `\n\n=== MODULE 3: AI & PRODUCT SIGNALS ===\n${mod3Raw}` : '',
+      mod4Raw ? `\n\n=== MODULE 4: TECHNICAL ARCHITECTURE ===\n${mod4Raw}` : '',
+      mod5Raw ? `\n\n=== MODULE 5: VERTICAL MARKET ANALYSIS ===\n${mod5Raw}` : '',
+      mod6Raw ? `\n\n=== MODULE 6: VERTICAL COMPETITIVE INTELLIGENCE ===\n${mod6Raw}` : ''
+    ].join('');
+
+    setPipeStep('research','done');
+    pipeLog('Research complete — ' + Math.round(researchRaw.length/1000) + 'k chars.', '#00d4b4');
+
+    // ── STEP 2: ROUTE + SCORE ──
+    setPipeStep('route','active');
+    setPipeStep('score','active');
+    $('pipe-running-title').textContent = 'Scoring ' + companyName + '…';
+    pipeLog('Routing to Play 1 or Play 2 + dual-framework scoring…', 'var(--teal)');
+    
+    // Prepend business context if provided
+    let researchForScoring = researchRaw.slice(0, 35000);
+    if (businessContext) {
+      researchForScoring = `=== USER-PROVIDED BUSINESS CONTEXT ===\n${businessContext}\n\n${researchForScoring}`;
+      pipeLog('Business context included in scoring input', 'var(--teal)');
+    }
+    
+    const scoringPrompt = buildScoringPrompt(companyName, researchForScoring);
+    const scoringRaw = await Promise.race([
+      callClaude(scoringPrompt, 4000, false, 0),
+      new Promise((_,reject) => setTimeout(() => reject(new Error('Scoring timeout (55s)')), 55000))
+    ]);
+
+    let scored;
+    try {
+      scored = parseJSON(scoringRaw);
+      if (!scored || !scored.play) throw new Error('Invalid scoring output - missing play field');
+      if (scored.play === 'Play1' && (!scored.sai1 || !scored.vai1)) {
+        throw new Error('Play1 route but missing sai1 or vai1 data');
+      }
+      if (scored.play === 'Play2' && (!scored.sai2 || !scored.vai2)) {
+        throw new Error('Play2 route but missing sai2 or vai2 data');
+      }
+    } catch(e) {
+      pipeLog('Scoring parse error: ' + e.message, 'var(--red)');
+      pipeLog('Check browser console for full Claude response', 'var(--amber)');
+      throw new Error('Scoring failed: ' + e.message);
+    }
+
+    setPipeStep('route','done');
+    setPipeStep('score','done');
+    const sai = scored.play === 'Play1' ? scored.sai1 : scored.sai2;
+    const vai = scored.play === 'Play1' ? scored.vai1 : scored.vai2;
+    const saiMax = scored.play === 'Play1' ? 100 : sai.max;
+    pipeLog(`Route: ${scored.play} · SAI: ${sai.total}/${saiMax} · VAI: ${vai.total}/100`, '#00d4b4');
+
+    // ── SAVE COMPANY IMMEDIATELY AFTER SCORING ──
+    scored.gammaUrl = null;
+    scored.narrativeStatus = 'pending'; // Track narrative generation status
+    COMPANIES.unshift(scored);
+    refreshGrid();
+    pipeLog('✅ Company scored and added to grid!', '#00d4b4');
+    
+    // ── STAGE 1 COMPLETE: Show success and auto-trigger Stage 2 ──
+    pipeLog('═══════════════════════════════════════', 'var(--faint)');
+    pipeLog('STAGE 1 COMPLETE: Research + Scoring', '#00d4b4');
+    pipeLog('STAGE 2 STARTING: Narrative Generation', 'var(--teal)');
+    pipeLog('═══════════════════════════════════════', 'var(--faint)');
+    
+    // Auto-trigger narrative generation (separate call, under 60s)
+    runNarrativeGeneration(scored, researchRaw);
+    
+    // Stage 1 shows as complete - user can see scores immediately
+    setPipeStep('gamma','done'); // Using gamma step as placeholder for "complete"
+    const isPlay1 = scored.play === 'Play1';
+    $('pipe-running-state').style.display = 'none';
+    $('pipe-success-state').style.display = 'block';
+    $('pipe-url').innerHTML = `<span style="color:var(--teal)">✅ Stage 1 Complete: Scored ${sai.total}/${saiMax}</span><br><span style="color:var(--muted)">Stage 2: Generating detailed narratives... (check company card)</span>`;
+
+  } catch(err) {
+    // Check if company was already scored and saved
+    const companySaved = COMPANIES.length > 0 && COMPANIES[0].name === companyName;
+    
+    if (companySaved) {
+      // Scoring succeeded, just show success with warning
+      $('pipe-running-state').style.display = 'none';
+      $('pipe-success-state').style.display = 'block';
+      $('pipe-url').innerHTML = `<span style="color:var(--muted)">Pipeline completed with warnings - </span><strong style="color:var(--teal)">Company scored and saved to grid!</strong>`;
+      setPipeStep('gamma','error');
+    } else {
+      // Actual failure before scoring completed
+      setPipeStep('gamma','error');
+      $('pipe-running-state').style.display = 'none';
+      $('pipe-error-state').style.display = 'block';
+      $('pipe-error-msg').textContent = err.message || 'Unknown error';
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// STAGE 2: NARRATIVE GENERATION (SEPARATE CALL)
+// ═══════════════════════════════════════════════════════
+async function runNarrativeGeneration(scoredCompany, researchRaw) {
+  try {
+    console.log('Starting Stage 2: Narrative generation for', scoredCompany.name);
+    
+    // Update company status
+    COMPANIES[0].narrativeStatus = 'generating';
+    refreshGrid();
+    
+    pipeLog('Building IC-grade narrative (3 chunks)…', 'var(--teal)');
+    setPipeStep('narrative','active');
+    
+    const researchSlice = researchRaw.slice(0, 40000);
+    
+    // Build 3 chunk prompts
+    const chunk1Prompt = buildNarrativeChunk1(scoredCompany, researchSlice);
+    const chunk2Prompt = buildNarrativeChunk2(scoredCompany, researchSlice);
+    const chunk3Prompt = buildNarrativeChunk3(scoredCompany, researchSlice);
+    
+    pipeLog('Chunk 1: Business context…', 'var(--muted)');
+    pipeLog('Chunk 2: Framework analysis…', 'var(--muted)');
+    pipeLog('Chunk 3: Investment summary…', 'var(--muted)');
+    
+    // Execute 3 chunks in parallel (each ~18s, total ~25s)
+    const [chunk1Raw, chunk2Raw, chunk3Raw] = await Promise.all([
+      Promise.race([
+        callClaude(chunk1Prompt, 1500, false, 0),
+        new Promise((_, rej) => setTimeout(() => rej(new Error('Chunk 1 timeout')), 25000))
+      ]),
+      Promise.race([
+        callClaude(chunk2Prompt, 1500, false, 0),
+        new Promise((_, rej) => setTimeout(() => rej(new Error('Chunk 2 timeout')), 25000))
+      ]),
+      Promise.race([
+        callClaude(chunk3Prompt, 1500, false, 0),
+        new Promise((_, rej) => setTimeout(() => rej(new Error('Chunk 3 timeout')), 25000))
+      ])
+    ]);
+    
+    // Parse and merge chunks
+    let narrative = null;
+    try {
+      const c1 = parseJSON(chunk1Raw);
+      const c2 = parseJSON(chunk2Raw);
+      const c3 = parseJSON(chunk3Raw);
+      narrative = { ...c1, ...c2, ...c3 };
+      console.log('Narrative chunks merged:', Object.keys(narrative));
+      pipeLog('All 3 chunks merged successfully!', '#00d4b4');
+    } catch(e) { 
+      console.error('Chunk parse error:', e);
+      pipeLog('Chunk parse warning: ' + e.message, 'var(--amber)'); 
+    }
+    
+    // Attach narrative to company object
+    if (narrative && Object.keys(narrative).length > 0) {
+      COMPANIES[0].narrative = narrative;
+      COMPANIES[0].narrativeStatus = 'complete';
+      refreshGrid();
+      console.log('Narrative attached to company:', COMPANIES[0].name);
+      pipeLog('✅ IC narrative complete and attached!', '#00d4b4');
+      setPipeStep('narrative','done');
+    } else {
+      console.warn('Narrative object empty or undefined');
+      COMPANIES[0].narrativeStatus = 'failed';
+      refreshGrid();
+      pipeLog('⚠️ Narrative generation failed - chunks may have timed out', 'var(--amber)');
+      setPipeStep('narrative','error');
+    }
+    
+  } catch(err) {
+    console.error('Narrative generation error:', err);
+    COMPANIES[0].narrativeStatus = 'failed';
+    refreshGrid();
+    setPipeStep('narrative','error');
+    pipeLog('Narrative error: ' + err.message, 'var(--red)');
+  }
+}
+
+// ── MODULE BUILDERS ──
+function buildModule1Prompt(company, businessContext) {
+  let prompt = `You are a growth equity analyst at AQL Growth researching "${company}" for an IC presentation.
+
+IMPORTANT: Be concise and dense. Prioritize specific facts, names, numbers, and evidence. Avoid verbose explanations.`;
+
+  if (businessContext) {
+    prompt += `\n\nUSER-PROVIDED CONTEXT:\n${businessContext}\n\nUse this context to guide your research and ensure you're finding the RIGHT company.`;
+  }
+
+  prompt += `\n\nReturn ONLY these sections with EXACT headers:
+
+## COMPANY OVERVIEW
+Full legal name, website, HQ city/state, founded year. ALL funding rounds (amount, date, lead investor names). Total raised. Current valuation if public. Key executives (CEO, CTO, founders) with backgrounds. Employee count. ARR estimate with source.
+
+## PRODUCT & WORKFLOW
+Every named product module/feature. Primary daily workflow owned step-by-step. Core work objects managed. Data types captured. Integration ecosystem (name all integrations). Switching cost drivers. Pricing model with tiers if public.
+
+## ICP & BUYER PERSONAS
+For EACH distinct buyer/user role (aim for 3-5 roles):
+**[Role Title]**
+- Daily responsibilities
+- KPIs they're measured on
+- Before-state pain (specific, quantified)
+- After-state with platform (specific, quantified)
+- Decision authority level
+
+No generic statements. Extract specific names, numbers, quotes.`;
+  
+  return prompt;
+}
+
+function buildModule2Prompt(company, businessContext) {
+  return `You are a growth equity analyst at AQL Growth researching "${company}" for an IC presentation.
+
+IMPORTANT: Be concise and dense. Prioritize specific facts, names, numbers, and evidence. Avoid verbose explanations.
+
+Return ONLY these sections with EXACT headers:
+
+## CUSTOMER EVIDENCE
+Named customers with EXACT verbatim quotes and attribution (Name, Title, Company). Specific ROI metrics with numbers. Case study before/after quantified results. Customer count if available. NPS/CSAT if available. Retention signals.
+
+## VALUE PROPOSITION
+What problems does ${company} solve? What outcomes do customers achieve? What makes it different from alternatives? (Evidence-based, cite specific customer quotes or case studies)
+
+## COMPETITIVE LANDSCAPE
+For EACH named competitor (aim for 5-8):
+**[Competitor Name]** · Founded [year] · [HQ] · [Public/Private/PE-owned]
+- ICP: who they serve
+- Core product: what they do
+- Pricing: model + price points if known
+- Reviews: Capterra X/5 (N reviews), G2 X/5 (N reviews)
+- Strengths: 2-3 specific
+- Weaknesses: 2-3 specific
+- vs ${company}: direct comparison
+
+No generic statements.`;
+}
+
+function buildModule3Prompt(company, businessContext) {
+  return `You are a growth equity analyst at AQL Growth researching "${company}" for an IC presentation.
+
+IMPORTANT: Be concise and dense. Prioritize specific facts, names, numbers, and evidence. Avoid verbose explanations.
+
+Return ONLY these sections with EXACT headers:
+
+## AI & PRODUCT SIGNALS
+Every named AI feature — label GA/BETA/ROADMAP. Autonomy level (suggests vs executes vs fully autonomous). AI monetization evidence (separate tier, usage-based, included). Outcome-based pricing signals. Training data claims. Model architecture signals (proprietary vs GPT wrapper).
+
+## KEY METRICS
+Every quantified metric found (growth rate %, customer count, GMV, transaction volume, usage stats, employees added, funding velocity) with SOURCE and DATE. If metric not found, state "Not found".
+
+## EXPANSION SIGNALS
+New product launches with dates. Recent partnerships. Job postings indicating expansion areas. Adjacent workflow opportunities. M&A activity.
+
+No generic statements.`;
+}
+
+function buildModule4Prompt(company, businessContext) {
+  return `You are a growth equity analyst at AQL Growth researching "${company}" for an IC presentation.
+
+IMPORTANT: Be concise and dense. Prioritize specific facts, names, numbers, and evidence. Avoid verbose explanations.
+
+Return ONLY these sections with EXACT headers:
+
+## TECHNICAL ARCHITECTURE
+Tech stack signals (languages, frameworks, cloud provider). API availability (REST, GraphQL, webhooks). Mobile apps (iOS, Android). Security certifications (SOC 2, ISO 27001, HIPAA, GDPR compliance). Enterprise readiness (SSO, SCIM, audit logs, RBAC, SLA).
+
+## JOBS TO BE DONE
+The 5-7 most important jobs practitioners use ${company} to accomplish. For each:
+**[Job Title]**
+- Who does it (role)
+- Frequency (daily/weekly/monthly)
+- Economic impact (cost of doing poorly, revenue at risk)
+- How ${company} changes outcome
+
+## INVESTMENT SIGNALS
+Press releases (last 12 months, exact headlines + dates). Key executive hires. Named customer wins. Partnership announcements. Fundraising activity. Analyst mentions or awards.
+
+No generic statements.`;
+}
+
+function buildModule5Prompt(company, businessContext) {
+  return `You are a growth equity analyst at AQL Growth researching the VERTICAL MARKET for "${company}".
+
+${businessContext ? `
+USER-PROVIDED CONTEXT:
+${businessContext}
+` : ""}
+
+IMPORTANT: Be concise and dense. Prioritize specific facts, names, numbers, and evidence. Avoid verbose explanations.
+
+Return ONLY these sections with EXACT headers:
+
+## VERTICAL IDENTIFICATION
+What vertical/industry does ${company} serve? (e.g., "Waste Management", "Healthcare RCM", "Construction", "Legal"). Be specific.
+
+## TAM/SAM/SOM ANALYSIS
+Total Addressable Market (TAM) — cite methodology and source. Serviceable market (SAM) — buyer universe count with source. Serviceable Obtainable Market (SOM) — realistic capture estimate. Market growth rate (CAGR). Segmentation by customer size tier (SMB, mid-market, enterprise).
+
+## REGULATORY & COMPLIANCE LANDSCAPE
+Industry-specific regulations (name acts, standards, certifications). Compliance requirements that create software stickiness. Data privacy/security mandates. Licensing requirements. How regulations impact software adoption.
+
+## LABOR DYNAMICS & PAIN POINTS
+Labor cost structure in this vertical. Worker shortage signals. Turnover rates. Manual work / administrative burden. Tasks currently done by humans that software could automate. Economic pressure to reduce headcount or improve efficiency.
+
+## CATEGORY MATURITY & SOFTWARE PENETRATION
+Is this vertical mostly legacy, manual, or modern? Software penetration rate estimate. Average age of incumbent platforms. Greenfield vs replacement market. Modernization drivers (generational change, labor shortage, M&A consolidation).
+
+No generic statements. Cite sources.`;
+}
+
+function buildModule6Prompt(company, businessContext) {
+  return `You are a growth equity analyst at AQL Growth researching VERTICAL COMPETITIVE DYNAMICS for "${company}".
+
+${businessContext ? `
+USER-PROVIDED CONTEXT:
+${businessContext}
+` : ""}
+
+IMPORTANT: Be concise and dense. Prioritize specific facts, names, numbers, and evidence. Avoid verbose explanations.
+
+Return ONLY these sections with EXACT headers:
+
+## LEGACY INCUMBENT ANALYSIS
+Name 3-5 legacy/established platforms in this vertical. For each:
+**[Platform Name]** · Founded [year] · [Ownership]
+- Customer base size estimate
+- Tech stack age/modernity
+- AI capability posture (strong/weak/none)
+- Customer satisfaction signals (G2/Capterra scores, churn rumors)
+- Strategic vulnerabilities
+
+## MODERN SOR ENTRANTS
+Name 2-5 modern vertical SaaS platforms (founded post-2010). For each:
+**[Platform Name]** · Founded [year] · Funding [$X raised]
+- Core workflow owned
+- Feature parity vs legacy
+- Market share signals
+- AI roadmap signals
+
+## AI-NATIVE WEDGE PLAYERS
+Name 2-5 AI-first companies entering this vertical (if any). For each:
+**[Platform Name]** · Founded [year]
+- Entry wedge (what job/workflow)
+- Autonomous execution level
+- Funding/traction signals
+
+## BUNDLING THREATS & WHITE SPACE
+Horizontal platforms threatening vertical (e.g., ServiceTitan, Procore). White space opportunities (underserved segments, ignored workflows). Incumbent response velocity (fast/slow to ship AI, integrate).
+
+No generic statements. Name names.`;
+}
+
+// ── SCORING PROMPT BUILDER ──
+function buildScoringPrompt(companyName, research) {
+  return `You are an institutional-grade analyst for AQL Growth. Score "${companyName}" using the 4-framework system.
+
+RESEARCH DATA:
+${research}
+
+──────────────────────────────────────────────────
+STEP 1: ROUTE TO PLAY 1 OR PLAY 2
+──────────────────────────────────────────────────
+Play 1 (Modern SOR → SOA): Established vertical SaaS owning operational record of truth, multi-year switching costs, legacy replacement.
+Play 2 (AI Wedge → SOA): AI-native wedge, autonomous workflow execution as core value prop, building toward independent rails.
+
+Determine Play based on company type. Set "play": "Play1" or "play": "Play2".
+
+──────────────────────────────────────────────────
+STEP 2: SCORE APPROPRIATE FRAMEWORKS
+──────────────────────────────────────────────────
+If Play 1 → Score SAI 1.0 + VAI 1.0
+If Play 2 → Score SAI 2.0 + VAI 2.0
+
+${buildSAI1Rubric()}
+
+${buildSAI2Rubric()}
+
+${buildVAI1Rubric()}
+
+${buildVAI2Rubric()}
+
+──────────────────────────────────────────────────
+OUTPUT SCHEMA — Return ONLY valid JSON
+──────────────────────────────────────────────────
+
+For Play 1:
+{
+  "name": "${companyName}",
+  "vertical": "Industry Name",
+  "website": "",
+  "hq": "City, State",
+  "employees": "N employees",
+  "arr": "$XM ARR",
+  "play": "Play1",
+  "sai1": {
+    "total": 95,
+    "max": 100,
+    "classification": "Fortress SOR",
+    "dims": {
+      "dataGravity": 24,
+      "workflowGravity": 29,
+      "accountGravity": 14,
+      "networkEffects": 9,
+      "ecosystem": 4,
+      "productExtension": 14,
+      "paymentsBonus": 1
+    }
+  },
+  "vai1": {
+    "total": 85,
+    "verticalClass": "Strong SOR→SOA Vertical",
+    "factors": {
+      "addressableMarket": 9,
+      "competitiveRunway": 8,
+      "urgency": 9,
+      "modernizationGap": 9,
+      "incumbentWeakness": 8,
+      "customerDissatisfaction": 9,
+      "incumbentAIVacuum": 9,
+      "workflowDensity": 9,
+      "regulatoryComplexity": 7,
+      "sorToSoaViability": 8
+    }
+  },
+  "sai2": null,
+  "vai2": null,
+  "gammaUrl": null
+}
+
+For Play 2:
+{
+  "name": "${companyName}",
+  "vertical": "Industry Name",
+  "website": "",
+  "hq": "City, State",
+  "employees": "N employees",
+  "arr": "$XM ARR",
+  "play": "Play2",
+  "sai1": null,
+  "vai1": null,
+  "sai2": {
+    "total": 77,
+    "max": 100,
+    "classification": "AI Active Wedge",
+    "dims": {
+      "jobGravity": 26,
+      "workflowExecution": 21,
+      "railIndependence": 12,
+      "outcomeExhaust": 6,
+      "compoundingLoop": 5,
+      "aiMoat": 2,
+      "expansionPath": 5
+    }
+  },
+  "vai2": {
+    "total": 72,
+    "verticalClass": "Moderate Wedge Opportunity",
+    "factors": {
+      "weakIncumbentAI": 10,
+      "accessibleControlPoints": 8,
+      "openWorkflowRails": 7,
+      "repeatableAIWorkflows": 8,
+      "painfulWork": 9,
+      "independentDataCapture": 6,
+      "learningSignals": 7,
+      "clearROI": 8,
+      "fastBuyerAdoption": 6,
+      "pathToSOA": 3
+    }
+  },
+  "gammaUrl": null
+}
+
+CRITICAL: Return ONLY the JSON object above. No markdown fences, no explanation, no preamble, no postamble. Just the raw JSON starting with { and ending with }`;
+}
+
+function buildSAI1Rubric() {
+  return `SAI 1.0 RUBRIC (Play 1: Modern SOR → SOA) — Max 100, can score up to 105 with bonus
+
+FORTRESS CALIBRATION GUIDE — What top-tier (24-25, 28-30, 13-15) evidence looks like:
+
+Data Gravity 24-25:
+✓ Owns complete operational records (schedules, transactions, customer data, compliance docs)
+✓ Multi-year history stored and actively used
+✓ Data is THE canonical source of truth for the vertical
+✓ Customers describe it as "our system of record" or "where everything lives"
+✓ Example: Home care platform owns every caregiver schedule, client record, visit log, billing record
+
+Workflow Gravity 28-30:
+✓ Runs the ENTIRE primary operating loop end-to-end (not just one step)
+✓ Used daily by core operators (schedulers, dispatchers, managers, etc.)
+✓ Evidence of "we can't operate without it" or "use it all day every day"
+✓ Multiple workflow steps chained inside the platform
+✓ Example: Schedule → Dispatch → Track → Bill → Report all in one platform
+
+Account Gravity 13-15:
+✓ 4+ distinct roles using it (schedulers, field workers, managers, billing, executives)
+✓ Senior executive sponsor (CEO, COO, CFO level)
+✓ High breakage impact: "business stops if this breaks"
+✓ Mission-critical classification by customers
+✓ Example: Agency owner, scheduler, caregivers, billing team all depend on it
+
+Network Effects 9-10:
+✓ Strong cross-role coordination (scheduler → caregiver → billing coordination)
+✓ External coordination (with clients, families, partners, vendors)
+✓ Data shared across roles creates coordination value
+✓ Example: Scheduler assigns → Caregiver confirms → Client receives notification → Billing auto-triggered
+
+NOW APPLY THE RUBRIC:
+
+Data Gravity (0-25): Custody of core operating records, longitudinal value.
+  25 = canonical SOR with durable history
+  23-24 = clear SOR ownership, minor gaps
+  20-22 = owns most core records
+  <20 = partial ownership
+
+Workflow Gravity (0-30): Ownership of daily operating loop.
+  29-30 = runs entire primary loop, daily use confirmed
+  26-28 = runs most of loop
+  22-25 = major sub-loop
+  <22 = point solution
+
+Account Gravity (0-15): Role density + sponsor mandate + breakage.
+  14-15 = 4+ roles, senior sponsor, high breakage
+  12-13 = 3 roles, sponsor confirmed
+  9-11 = 2-3 roles, moderate breakage
+  <9 = single role
+
+Network Effects/Control (0-10): Internal + external coordination.
+  9-10 = strong cross-role + external embedding
+  7-8 = solid internal coordination
+  5-6 = internal loops present
+  <5 = minimal coordination
+
+Ecosystem Control (0-5): Integration rails, API, marketplace.
+  5 = multiple integrations + API + marketplace
+  4 = integration depth + API
+  3 = some integrations
+  1-2 = minimal
+  0 = none
+
+Product Extension (0-15): Monetizable adjacencies.
+  14-15 = 4+ monetized surfaces
+  12-13 = 3-4 surfaces
+  9-11 = 2-3 surfaces
+  <9 = limited
+
+Payments Bonus (0-5):
+  +5 = embedded payments + workflow integration confirmed
+  +3-4 = payments confirmed, integration partial
+  +1-2 = billing/invoicing native
+  +0 = none
+
+BASE SCORE = sum of 6 dimensions (max 100)
+TOTAL SCORE = base + payments bonus (max 105)
+DENOMINATOR = always 100
+
+SCORING PHILOSOPHY: When evidence clearly shows fortress characteristics (owns all records, runs entire loop, mission-critical, multi-role), score at TOP of band (24-25, 28-30, 13-15). Be generous with top scores when evidence is strong. Reserve conservative scoring for ambiguous cases only.
+
+Classification (based on TOTAL score):
+  95-105 = Fortress SOR
+  85-94 = Strong SOR
+  70-84 = Core SaaS
+  50-69 = Point Solution
+  <50 = Weak Tool`;
+}
+
+function buildSAI2Rubric() {
+  return `SAI 2.0 RUBRIC (Play 2: AI Wedge → SOA) — Max 100 points
+
+Job Gravity (0-30): Pain, frequency, economic impact of starting job.
+  27-30 = severe pain, daily, mission-critical
+  23-26 = high pain, frequent, important
+  18-22 = moderate pain/frequency
+  <18 = low gravity
+
+Workflow Execution (0-25): Does work vs suggests.
+  22-25 = fully autonomous multi-step execution
+  18-21 = autonomous single-step execution
+  13-17 = semi-autonomous (human in loop)
+  <13 = advisory only
+
+Rail Independence (0-15): Can operate without incumbent SOR.
+  13-15 = full independence, own data rails
+  10-12 = high independence, some SOR data helpful
+  6-9 = moderate dependency
+  <6 = high SOR dependency
+
+Outcome-Labeled Exhaust (0-9): Feedback on work quality.
+  7-9 = strong outcome labels, win/loss tracking
+  4-6 = moderate feedback signals
+  1-3 = weak signals
+  0 = no feedback
+
+Compounding Loop (0-8): Model improves with usage.
+  7-8 = active learning confirmed, model versioning
+  5-6 = improvement signals present
+  3-4 = aspirational improvement
+  <3 = static model
+
+AI Moat (0-3): Proprietary data or model advantage.
+  3 = unique dataset + model differentiation
+  2 = unique dataset OR model differentiation
+  1 = moderate data accumulation
+  0 = generic wrapper
+
+Expansion Path (0-10): Route to broader SOA.
+  9-10 = clear SOA path with shipped expansions
+  7-8 = strong adjacency signals
+  4-6 = plausible path
+  1-3 = weak path
+  0 = no path
+
+Classification:
+  85-100 = AI Emerging SOA
+  70-84 = AI Active Wedge
+  50-69 = AI Vertical Tool
+  <50 = AI Point Solution`;
+}
+
+function buildVAI1Rubric() {
+  return `VAI 1.0 RUBRIC (Play 1: Vertical Attractiveness for SOR → SOA) — Max 100 points
+
+Score each factor 0-10. Strong verticals with clear evidence should score 9-10 per factor (95-100 total).
+
+Addressable Market (10): Winnable market size, dense ICP, adoption curve.
+  9-10 = $300M+ TAM, clear buyer universe, strong adoption signals
+  7-8 = $100-300M TAM, defined ICP
+  5-6 = <$100M TAM or unclear ICP
+  <5 = niche/tiny market
+
+Competitive Runway (10): White space, limited modern competition.
+  9-10 = 0-3 modern players, clear white space or weak modern competitors
+  7-8 = 4-6 modern players, some differentiation possible
+  5-6 = crowded but niches available
+  <5 = saturated, no room
+
+Urgency (10): Why now? Labor pain, compliance, industry change.
+  9-10 = clear catalyst (regulatory mandate, labor shortage, industry shift)
+  7-8 = moderate urgency drivers present
+  5-6 = incremental urgency
+  <5 = no urgency
+
+Modernization Gap (10): Market still legacy/manual.
+  9-10 = <30% modern penetration, mostly legacy or manual
+  7-8 = 30-50% modern penetration
+  5-6 = 50-70% modern
+  <5 = >70% modern, well-served
+
+Incumbent Weakness (10): Old tech, unloved, vulnerable.
+  9-10 = legacy platforms dominant with clear weaknesses (old tech, poor UX, hated)
+  7-8 = incumbents adequate but aging
+  5-6 = incumbents functional
+  <5 = strong, well-loved incumbents
+
+Customer Dissatisfaction (10): Ready to switch.
+  9-10 = strong dissatisfaction signals (complaints, churn, poor reviews, switching intent)
+  7-8 = moderate dissatisfaction
+  5-6 = neutral sentiment
+  <5 = satisfied customers, high loyalty
+
+Incumbent AI Vacuum (10): Incumbents not shipping real AI.
+  9-10 = no meaningful AI from incumbents, window clearly open
+  7-8 = weak copilot/assistant efforts only
+  5-6 = some AI features shipping
+  <5 = strong AI already deployed by incumbents
+
+Workflow Density (10): Complex, daily, data-rich.
+  9-10 = highly complex workflows, daily execution required, data-intensive
+  7-8 = moderate complexity, frequent use
+  5-6 = simple workflows or infrequent
+  <5 = very simple, occasional use
+
+SOA Defensibility (10): Compliance creates moat.
+  9-10 = heavy regulation, high compliance burden, certifications required
+  7-8 = moderate regulation
+  5-6 = light regulation
+  <5 = minimal or no regulation
+
+SOR to SOA Viability (10): Whether a vertical offers a clear and durable path for a System of Record to become the action layer.
+  9-10 = vertical-specific workflows, clear path from data ownership to action execution, defensible from horizontal AI platforms
+  7-8 = moderate vertical specificity, plausible SOA path
+  5-6 = some horizontal platform threat
+  <5 = high substitution risk from horizontal AI/platforms
+
+SCORING PHILOSOPHY: If research shows clear evidence of a factor, default to 9-10. Reserve 7-8 for moderate evidence, 5-6 for weak evidence. Strong verticals should score 95-100 total.
+
+SCORING PHILOSOPHY: If research shows clear evidence of a factor, default to 9-10. Reserve 7-8 for moderate evidence, 5-6 for weak evidence. Strong verticals should score 95-100 total.
+
+Total = sum of all 10 factors (max 100)`;
+}
+
+function buildVAI2Rubric() {
+  return `VAI 2.0 RUBRIC (Play 2: Vertical Attractiveness for AI Wedge) — Max 100 points
+
+Weak Incumbent AI Defense (12): Incumbents slow/weak at AI execution.
+  11-12 = incumbents ship copilots not execution, structural barriers
+  9-10 = slow AI response, cultural resistance
+  7-8 = moderate AI capability emerging
+  <7 = strong incumbent AI
+
+Accessible Control Points (12): Control points outside incumbent lock-in.
+  11-12 = multiple accessible control points (billing, scheduling, claims)
+  9-10 = 1-2 accessible control points
+  7-8 = control points require some incumbent permission
+  <7 = tight incumbent control
+
+Open Workflow Rails (12): Work runs on open rails (phone, email, docs).
+  11-12 = critical work on fully open rails
+  9-10 = partial open rail access
+  7-8 = mixed open/closed
+  <7 = mostly closed rails
+
+Repeatable AI Workflows (10): Frequent workflows AI can execute repeatedly.
+  9-10 = highly repeatable daily workflows
+  7-8 = repeatable weekly workflows
+  5-6 = occasional repetition
+  <5 = low repeatability
+
+Painful Work Worth Automating (10): Hated, time-consuming, revenue-leaking.
+  9-10 = severe pain, high time sink, revenue at risk
+  7-8 = moderate pain/time burden
+  5-6 = minor pain
+  <5 = low pain
+
+Independent Data Capture (10): Can access data without SOR permission.
+  9-10 = full data access via open channels (calls, emails, docs)
+  7-8 = partial independent access
+  5-6 = some SOR data needed
+  <5 = heavy SOR dependency
+
+Strong Learning Signals (8): Clear feedback (approvals, denials, conversions).
+  7-8 = strong outcome signals, labeled feedback
+  5-6 = moderate signals
+  3-4 = weak signals
+  <3 = no signals
+
+Clear ROI Measurement (8): Fast, clean ROI (time saved, revenue captured).
+  7-8 = ROI measurable in weeks, clear attribution
+  5-6 = ROI measurable in months
+  3-4 = ROI fuzzy
+  <3 = no clear ROI
+
+Fast Buyer Adoption (10): Quick trial, low procurement friction.
+  9-10 = bottoms-up adoption, decentralized decision
+  7-8 = moderate procurement speed
+  5-6 = some friction
+  <5 = long sales cycles
+
+Natural Path to System of Action (8): Clear adjacency map from wedge to platform.
+  7-8 = obvious expansion path with confirmed adjacencies
+  5-6 = plausible path
+  3-4 = unclear path
+  <3 = no path visible
+
+Total = sum of all 10 factors (max 100)`;
+}
+
+// ── NARRATIVE PROMPT BUILDER ──
+function buildNarrativePrompt(scored, research) {
+  const isPlay1 = scored.play === 'Play1';
+  const sai = isPlay1 ? scored.sai1 : scored.sai2;
+  const vai = isPlay1 ? scored.vai1 : scored.vai2;
+
+  return `You are a sharp growth equity analyst at AQL Growth. Write IC-grade narrative for "${scored.name}".
+
+COMPANY DATA:
+${JSON.stringify(scored, null, 2)}
+
+RESEARCH EVIDENCE:
+${research.slice(0, 35000)}
+
+Generate narrative content for Gamma Site (~35-40 slides). Present tense. Evidence-grounded. Institutional voice. No filler.
+
+Return ONLY valid JSON with these exact fields:
+
+{
+  "executiveSummary": "3-4 sentence investment thesis — what they do, why it matters, investment case",
+  "businessOverview": "5-6 sentences on company history, mission, what they've built",
+  "productDeepDive": "4-5 sentences on platform modules, core workflow owned",
+  "valueProposition": "3 sentences on problems solved and outcomes delivered",
+  "customerEvidence": "3-4 named customer quotes or case study results with attribution",
+  "marketOverview": "4-5 sentences on TAM/SAM/SOM, market structure, growth drivers",
+  "competitivePositioning": "4-5 sentences on where they sit vs legacy/modern/wedges",
+  ${isPlay1 ? `
+  "sai1Dimensions": {
+    "dataGravity": "3 sentences: what data they own, why it's valuable, evidence",
+    "workflowGravity": "3 sentences: workflow owned end-to-end, daily use evidence",
+    "accountGravity": "3 sentences: roles using it, sponsor power, breakage impact",
+    "networkEffects": "3 sentences: coordination value, internal/external embedding",
+    "ecosystem": "3 sentences: integration depth, API, marketplace",
+    "productExtension": "3 sentences: monetizable surfaces, expansion pathways"
+  },
+  "vai1Factors": {
+    "addressableMarket": "2 sentences: TAM evidence, buyer universe",
+    "competitiveRunway": "2 sentences: white space, modern competition level",
+    "urgency": "2 sentences: why now catalyst",
+    "modernizationGap": "2 sentences: legacy penetration, modernization state",
+    "incumbentWeakness": "2 sentences: incumbent vulnerabilities",
+    "customerDissatisfaction": "2 sentences: switching readiness signals",
+    "incumbentAIVacuum": "2 sentences: incumbent AI posture",
+    "workflowDensity": "2 sentences: complexity and frequency of workflows",
+    "regulatoryComplexity": "2 sentences: compliance moat",
+    "sorToSoaViability": "2 sentences: SOR to action layer path viability and defensibility"
+  },
+  ` : `
+  "sai2Dimensions": {
+    "jobGravity": "3 sentences: job pain, frequency, economic impact",
+    "workflowExecution": "3 sentences: autonomy level, what it executes",
+    "railIndependence": "3 sentences: independence from incumbent SOR",
+    "outcomeExhaust": "3 sentences: feedback signals, outcome labeling",
+    "compoundingLoop": "3 sentences: how model improves with usage",
+    "aiMoat": "3 sentences: proprietary data or model advantage",
+    "expansionPath": "3 sentences: route from wedge to SOA"
+  },
+  "vai2Factors": {
+    "weakIncumbentAI": "2 sentences: incumbent AI defense posture",
+    "accessibleControlPoints": "2 sentences: control points outside incumbent",
+    "openWorkflowRails": "2 sentences: open rails accessible",
+    "repeatableAIWorkflows": "2 sentences: workflow repeatability",
+    "painfulWork": "2 sentences: pain level and automation value",
+    "independentDataCapture": "2 sentences: data access without permission",
+    "learningSignals": "2 sentences: feedback signal strength",
+    "clearROI": "2 sentences: ROI measurement speed and clarity",
+    "fastBuyerAdoption": "2 sentences: adoption friction level",
+    "pathToSOA": "2 sentences: wedge-to-platform expansion path"
+  },
+  `}
+  "keyStrengths": ["strength 1 with evidence", "strength 2", "strength 3"],
+  "keyRisks": ["risk 1 with evidence", "risk 2", "risk 3"],
+  "scoreCeiling": "2-3 sentences on what constrains score and what would move it",
+  "openQuestions": ["DD question 1", "DD question 2", "DD question 3"],
+  "investmentView": "3-4 sentence AQL perspective — BUY/PURSUE/WATCH/PASS with rationale"
+}
+
+CRITICAL: Return ONLY the JSON object above. No markdown fences, no explanation, no preamble, no postamble. Just the raw JSON.`;
+}
+
+// ── CHUNKED NARRATIVE BUILDERS (v6.1) ──
+function buildNarrativeChunk1(scored, research) {
+  // CHUNK 1: BUSINESS CONTEXT (~1500 tokens, ~18s)
+  return `You are a sharp growth equity analyst at AQL Growth. Write IC-grade business context narrative for "${scored.name}".
+
+COMPANY DATA:
+${JSON.stringify(scored, null, 2).slice(0, 8000)}
+
+RESEARCH EVIDENCE:
+${research.slice(0, 30000)}
+
+Generate business context content for IC presentation. Present tense. Evidence-grounded. Institutional voice. No filler.
+
+Return ONLY valid JSON with these exact fields:
+
+{
+  "executiveSummary": "3-4 sentence investment thesis — what they do, why it matters, investment case",
+  "businessOverview": "5-6 sentences on company history, mission, what they've built",
+  "productDeepDive": "4-5 sentences on platform modules, core workflow owned",
+  "valueProposition": "3 sentences on problems solved and outcomes delivered",
+  "customerEvidence": "3-4 named customer quotes or case study results with attribution",
+  "marketOverview": "4-5 sentences on TAM/SAM/SOM, market structure, growth drivers",
+  "competitivePositioning": "4-5 sentences on where they sit vs legacy/modern/wedges"
+}
+
+CRITICAL: Return ONLY the JSON object. No markdown fences, no explanation.`;
+}
+
+function buildNarrativeChunk2(scored, research) {
+  // CHUNK 2: FRAMEWORK ANALYSIS (~1500 tokens, ~18s)
+  const isPlay1 = scored.play === 'Play1';
+  
+  return `You are a sharp growth equity analyst at AQL Growth. Write IC-grade framework analysis for "${scored.name}".
+
+COMPANY DATA:
+${JSON.stringify(scored, null, 2).slice(0, 8000)}
+
+RESEARCH EVIDENCE:
+${research.slice(0, 30000)}
+
+Generate framework dimension narratives for ${isPlay1 ? 'SAI 1.0 + VAI 1.0' : 'SAI 2.0 + VAI 2.0'}. Evidence-grounded. Institutional voice.
+
+Return ONLY valid JSON with these exact fields:
+
+{
+  ${isPlay1 ? `
+  "sai1Dimensions": {
+    "dataGravity": "3 sentences: what data they own, why it's valuable, evidence",
+    "workflowGravity": "3 sentences: workflow owned end-to-end, daily use evidence",
+    "accountGravity": "3 sentences: roles using it, sponsor power, breakage impact",
+    "networkEffects": "3 sentences: coordination value, internal/external embedding",
+    "ecosystem": "3 sentences: integration depth, API, marketplace",
+    "productExtension": "3 sentences: monetizable surfaces, expansion pathways"
+  },
+  "vai1Factors": {
+    "addressableMarket": "2 sentences: TAM evidence, buyer universe",
+    "competitiveRunway": "2 sentences: white space, modern competition level",
+    "urgency": "2 sentences: why now catalyst",
+    "modernizationGap": "2 sentences: legacy penetration, modernization state",
+    "incumbentWeakness": "2 sentences: incumbent vulnerabilities",
+    "customerDissatisfaction": "2 sentences: switching readiness signals",
+    "incumbentAIVacuum": "2 sentences: incumbent AI posture",
+    "workflowDensity": "2 sentences: complexity and frequency of workflows",
+    "regulatoryComplexity": "2 sentences: compliance moat",
+    "sorToSoaViability": "2 sentences: SOR to action layer path viability and defensibility"
+  }
+  ` : `
+  "sai2Dimensions": {
+    "jobGravity": "3 sentences: job pain, frequency, economic impact",
+    "workflowExecution": "3 sentences: autonomy level, what it executes",
+    "railIndependence": "3 sentences: independence from incumbent SOR",
+    "outcomeExhaust": "3 sentences: feedback signals, outcome labeling",
+    "compoundingLoop": "3 sentences: how model improves with usage",
+    "aiMoat": "3 sentences: proprietary data or model advantage",
+    "expansionPath": "3 sentences: route from wedge to SOA"
+  },
+  "vai2Factors": {
+    "weakIncumbentAI": "2 sentences: incumbent AI defense posture",
+    "accessibleControlPoints": "2 sentences: control points outside incumbent",
+    "openWorkflowRails": "2 sentences: open rails accessible",
+    "repeatableAIWorkflows": "2 sentences: workflow repeatability",
+    "painfulWork": "2 sentences: pain level and automation value",
+    "independentDataCapture": "2 sentences: data access without permission",
+    "learningSignals": "2 sentences: feedback signal strength",
+    "clearROI": "2 sentences: ROI measurement speed and clarity",
+    "fastBuyerAdoption": "2 sentences: adoption friction level",
+    "pathToSOA": "2 sentences: wedge-to-platform expansion path"
+  }
+  `}
+}
+
+CRITICAL: Return ONLY the JSON object. No markdown fences, no explanation.`;
+}
+
+function buildNarrativeChunk3(scored, research) {
+  // CHUNK 3: INVESTMENT SUMMARY (~1500 tokens, ~18s)
+  return `You are a sharp growth equity analyst at AQL Growth. Write IC-grade investment summary for "${scored.name}".
+
+COMPANY DATA:
+${JSON.stringify(scored, null, 2).slice(0, 8000)}
+
+RESEARCH EVIDENCE:
+${research.slice(0, 30000)}
+
+Generate investment summary content. Evidence-grounded. Institutional voice. Sharp perspective.
+
+Return ONLY valid JSON with these exact fields:
+
+{
+  "keyStrengths": ["strength 1 with evidence", "strength 2 with evidence", "strength 3 with evidence"],
+  "keyRisks": ["risk 1 with evidence", "risk 2 with evidence", "risk 3 with evidence"],
+  "scoreCeiling": "2-3 sentences on what constrains score and what would move it higher",
+  "openQuestions": ["DD question 1", "DD question 2", "DD question 3"],
+  "investmentView": "3-4 sentence AQL perspective — BUY/PURSUE/WATCH/PASS with rationale"
+}
+
+CRITICAL: Return ONLY the JSON object. No markdown fences, no explanation.`;
+}
+
+// ── GAMMA CONTENT BUILDER ──
+function buildGammaContent(scored, narrative, research) {
+  const isPlay1 = scored.play === 'Play1';
+  const sai = isPlay1 ? scored.sai1 : scored.sai2;
+  const vai = isPlay1 ? scored.vai1 : scored.vai2;
+  const n = narrative || {};
+
+  let content = `# ${scored.name}
+## Eagle Vision · AQL Growth
+### ${sai.classification} · ${scored.play}
+
+**IC Investment Presentation**
+${scored.vertical}
+${new Date().toLocaleDateString('en-US', {month: 'long', year: 'numeric'})}
+
+---
+
+# Executive Summary
+
+${n.executiveSummary || `${scored.name} is a ${scored.play === 'Play1' ? 'modern vertical SaaS platform' : 'AI-native vertical wedge'} in ${scored.vertical}.`}
+
+**Framework Scores:**
+- ${isPlay1 ? 'SAI 1.0' : 'SAI 2.0'}: ${sai.total}/${isPlay1 ? '100' : sai.max} — ${sai.classification}
+- ${isPlay1 ? 'VAI 1.0' : 'VAI 2.0'}: ${vai.total}/100 — ${vai.verticalClass || 'Vertical Score'}
+
+---
+
+# Company Snapshot
+
+| | |
+|---|---|
+| **Company** | ${scored.name} |
+| **Website** | ${scored.website || '—'} |
+| **Headquarters** | ${scored.hq} |
+| **Employees** | ${scored.employees} |
+| **ARR** | ${scored.arr} |
+| **Play** | ${scored.play} |
+| **Vertical** | ${scored.vertical} |
+
+---
+
+# The Business
+
+${n.businessOverview || `${scored.name} operates in the ${scored.vertical} market.`}
+
+---
+
+# Product Deep Dive
+
+${n.productDeepDive || 'Product platform overview.'}
+
+---
+
+# Value Proposition
+
+${n.valueProposition || `${scored.name} delivers value through its platform.`}
+
+---
+
+# Customer Evidence
+
+${n.customerEvidence || 'Named customer evidence and case studies.'}
+
+---
+
+# Buyer Personas & Day-in-the-Life
+
+${research.includes('## ICP & BUYER PERSONAS') 
+  ? research.split('## ICP & BUYER PERSONAS')[1].split('##')[0].trim().slice(0, 800)
+  : `${scored.name} serves multiple user roles across customer organizations.`}
+
+---
+
+# Market Overview
+
+${n.marketOverview || `The ${scored.vertical} market opportunity.`}
+
+**TAM/SAM/SOM:**
+${research.includes('## TAM/SAM/SOM') 
+  ? research.split('## TAM/SAM/SOM')[1].split('##')[0].trim().slice(0, 600)
+  : 'Market sizing data from research.'}
+
+---
+
+# Competitive Landscape
+
+${research.includes('## COMPETITIVE LANDSCAPE') 
+  ? research.split('## COMPETITIVE LANDSCAPE')[1].split('##')[0].trim().slice(0, 1000)
+  : 'Competitive landscape overview.'}
+
+---
+
+# Competitive Positioning
+
+${n.competitivePositioning || `${scored.name}'s position in the market.`}
+
+---
+
+# Key Metrics & Traction
+
+${research.includes('## KEY METRICS') 
+  ? research.split('## KEY METRICS')[1].split('##')[0].trim().slice(0, 600)
+  : 'Growth metrics and traction signals.'}
+
+---
+
+# Technical Architecture
+
+${research.includes('## TECHNICAL ARCHITECTURE') 
+  ? research.split('## TECHNICAL ARCHITECTURE')[1].split('##')[0].trim().slice(0, 600)
+  : 'Technical infrastructure and enterprise readiness.'}
+
+---
+
+# Investment Signals
+
+${research.includes('## INVESTMENT SIGNALS') 
+  ? research.split('## INVESTMENT SIGNALS')[1].split('##')[0].trim().slice(0, 600)
+  : 'Recent funding, partnerships, and momentum indicators.'}
+
+---
+
+`;
+
+  // PART 2: FRAMEWORK ANALYSIS
+  if (isPlay1) {
+    content += buildSAI1Slides(scored, n);
+    content += buildVAI1Slides(scored, n);
+  } else {
+    content += buildSAI2Slides(scored, n);
+    content += buildVAI2Slides(scored, n);
+  }
+
+  // PART 3: INVESTMENT SUMMARY
+  content += `# Executive Investment Summary
+
+**Investment Thesis:**
+${n.investmentView || `${scored.name} represents a ${scored.play === 'Play1' ? 'Modern SOR → SOA' : 'AI Wedge → SOA'} opportunity in ${scored.vertical}.`}
+
+| Strengths ✅ | Risks ⚠️ |
+|---|---|
+${(n.keyStrengths || ['Strength 1', 'Strength 2', 'Strength 3']).map((s, i) => {
+  const r = (n.keyRisks || ['Risk 1', 'Risk 2', 'Risk 3'])[i] || '—';
+  return `| ${s} | ${r} |`;
+}).join('\n')}
+
+**Score Ceiling:** ${n.scoreCeiling || 'Score ceiling analysis.'}
+
+**Open Diligence Questions:**
+${(n.openQuestions || ['Question 1', 'Question 2', 'Question 3']).map(q => `- ${q}`).join('\n')}
+
+**AQL View:** ${n.investmentView || 'Investment recommendation.'}
+
+---
+
+*Eagle Vision v6 · AQL Growth · ${scored.play} Framework*`;
+
+  return content;
+}
+
+function buildSAI1Slides(scored, n) {
+  const sai = scored.sai1;
+  const dims = n.sai1Dimensions || {};
+  
+  return `# ${sai.classification} · ${sai.total}/100
+
+## SAI 1.0 Framework — System of Record → System of Action
+
+**What SAI 1.0 Measures:**
+Whether a modern vertical System of Record has the structural gravity to evolve into a System of Action.
+
+| Dimension | Score | Max |
+|---|---|---|
+| Data Gravity | ${sai.dims.dataGravity} | 25 |
+| Workflow Gravity | ${sai.dims.workflowGravity} | 30 |
+| Account Gravity | ${sai.dims.accountGravity} | 15 |
+| Network Effects/Control | ${sai.dims.networkEffects} | 10 |
+| Ecosystem Control | ${sai.dims.ecosystem} | 5 |
+| Product Extension | ${sai.dims.productExtension} | 15 |
+| Payments Bonus | ${sai.dims.paymentsBonus || 0} | 5 |
+| **Base Total** | **${sai.total - (sai.dims.paymentsBonus || 0)}** | **100** |
+| **Total with Bonus** | **${sai.total}** | **—** |
+
+${sai.total > 100 ? '✨ **Score exceeds 100 with Payments Bonus**' : ''}
+
+---
+
+# Data Gravity · ${sai.dims.dataGravity}/25
+
+**What it measures:** Whether the platform owns the longitudinal, proprietary operating dataset that compounds over time.
+
+**Why it matters to AQL:** The more critical and proprietary the data, the stronger the company's claim on the workflow and future action layer.
+
+**${scored.name} Analysis:**
+${dims.dataGravity || 'Data gravity analysis based on research evidence.'}
+
+---
+
+# Workflow Gravity · ${sai.dims.workflowGravity}/30
+
+**What it measures:** How deeply embedded the company is in the customer's day-to-day execution.
+
+**Why it matters to AQL:** This is the core of SoR strength: the deeper the product sits in the workflow, the harder it is to replace and the easier it is to move into action.
+
+**${scored.name} Analysis:**
+${dims.workflowGravity || 'Workflow gravity analysis.'}
+
+---
+
+# Account Gravity · ${sai.dims.accountGravity}/15
+
+**What it measures:** How important the product is across users, functions, and mission-critical decision points.
+
+**Why it matters to AQL:** Multi-role embeddedness increases stickiness and strategic importance.
+
+**${scored.name} Analysis:**
+${dims.accountGravity || 'Account gravity analysis.'}
+
+---
+
+# Network Effects & Control · ${sai.dims.networkEffects}/10
+
+**What it measures:** Whether the software coordinates multiple participants or stakeholders in a way that deepens its position.
+
+**Why it matters to AQL:** Coordination power increases defensibility and system centrality.
+
+**${scored.name} Analysis:**
+${dims.networkEffects || 'Network effects analysis.'}
+
+---
+
+# Ecosystem Control · ${sai.dims.ecosystem}/5
+
+**What it measures:** Whether the company sits at a hub inside the broader workflow, value chain, or partner ecosystem.
+
+**Why it matters to AQL:** Ecosystem centrality increases leverage and expansion potential.
+
+**${scored.name} Analysis:**
+${dims.ecosystem || 'Ecosystem control analysis.'}
+
+---
+
+# Product Extension · ${sai.dims.productExtension}/15
+
+**What it measures:** Whether the company has a credible path into adjacent workflows, products, and monetizable surfaces.
+
+**Why it matters to AQL:** A strong SoR matters most when it has somewhere meaningful to expand.
+
+**${scored.name} Analysis:**
+${dims.productExtension || 'Product extension analysis.'}
+
+---
+
+`;
+}
+
+function buildSAI2Slides(scored, n) {
+  const sai = scored.sai2;
+  const dims = n.sai2Dimensions || {};
+  
+  return `# ${sai.classification} · ${sai.total}/${sai.max}
+
+## SAI 2.0 Framework — AI-Native Wedge → System of Action
+
+**What SAI 2.0 Measures:**
+Whether an AI-native vertical wedge is strong enough to enter through a painful workflow, prove value, and climb toward becoming a Vertical System of Action.
+
+| Dimension | Score | Max |
+|---|---|---|
+| Job Gravity | ${sai.dims.jobGravity} | 30 |
+| Workflow Execution | ${sai.dims.workflowExecution} | 25 |
+| Rail Independence | ${sai.dims.railIndependence} | 15 |
+| Outcome-Labeled Exhaust | ${sai.dims.outcomeExhaust} | 9 |
+| Compounding Loop | ${sai.dims.compoundingLoop} | 8 |
+| AI Moat | ${sai.dims.aiMoat} | 3 |
+| Expansion Path | ${sai.dims.expansionPath} | 10 |
+| **Total** | **${sai.total}** | **100** |
+
+---
+
+# Job Gravity · ${sai.dims.jobGravity}/30
+
+**What it measures:** How painful, frequent, mission-critical, and economically meaningful the starting job is.
+
+**Why it matters to AQL:** A wedge must begin with a job that hurts enough to create urgency, budget, and buyer pull.
+
+**${scored.name} Analysis:**
+${dims.jobGravity || 'Job gravity analysis.'}
+
+---
+
+# Workflow Execution · ${sai.dims.workflowExecution}/25
+
+**What it measures:** Whether the product actually does the work inside the workflow rather than merely assisting or suggesting.
+
+**Why it matters to AQL:** Systems of Action win by executing, not just informing.
+
+**${scored.name} Analysis:**
+${dims.workflowExecution || 'Workflow execution analysis.'}
+
+---
+
+# Rail Independence · ${sai.dims.railIndependence}/15
+
+**What it measures:** How independently the wedge can operate from the incumbent SoR or core workflow rails.
+
+**Why it matters to AQL:** Independence makes it easier to enter, prove value, and avoid being trapped by the incumbent.
+
+**${scored.name} Analysis:**
+${dims.railIndependence || 'Rail independence analysis.'}
+
+---
+
+# Outcome-Labeled Exhaust · ${sai.dims.outcomeExhaust}/9
+
+**What it measures:** Whether the product receives feedback on whether its work was correct or valuable.
+
+**Why it matters to AQL:** This is what allows the system to improve with use.
+
+**${scored.name} Analysis:**
+${dims.outcomeExhaust || 'Outcome exhaust analysis.'}
+
+---
+
+# Compounding Loop · ${sai.dims.compoundingLoop}/8
+
+**What it measures:** Whether the wedge improves over time through data, usage, labels, and workflow repetition.
+
+**Why it matters to AQL:** This is what separates a feature from a compounding product.
+
+**${scored.name} Analysis:**
+${dims.compoundingLoop || 'Compounding loop analysis.'}
+
+---
+
+# AI Moat · ${sai.dims.aiMoat}/3
+
+**What it measures:** Whether there is a defensible advantage in the AI layer itself, such as proprietary data, modality, regulatory edge, or unique architecture.
+
+**Why it matters to AQL:** Many AI products are easy to copy; moat still matters.
+
+**${scored.name} Analysis:**
+${dims.aiMoat || 'AI moat analysis.'}
+
+---
+
+# Expansion Path · ${sai.dims.expansionPath}/10
+
+**What it measures:** Whether the wedge has a believable path from the first job into adjacent workflows and broader system control.
+
+**Why it matters to AQL:** A wedge only becomes strategically important if it has somewhere to go.
+
+**${scored.name} Analysis:**
+${dims.expansionPath || 'Expansion path analysis.'}
+
+---
+
+`;
+}
+
+function buildVAI1Slides(scored, n) {
+  const vai = scored.vai1;
+  const factors = n.vai1Factors || {};
+  
+  return `# Vertical Attractiveness · ${vai.total}/100
+
+## VAI 1.0 Framework — SOR → SOA Vertical Opportunity
+
+**What VAI 1.0 Measures:**
+Whether the vertical itself is attractive for a strong modern System of Record to compound into a System of Action.
+
+| Factor | Score |
+|---|---|
+| Addressable Market | ${vai.factors.addressableMarket}/10 |
+| Competitive Runway | ${vai.factors.competitiveRunway}/10 |
+| Urgency | ${vai.factors.urgency}/10 |
+| Modernization Gap | ${vai.factors.modernizationGap}/10 |
+| Incumbent Weakness | ${vai.factors.incumbentWeakness}/10 |
+| Customer Dissatisfaction | ${vai.factors.customerDissatisfaction}/10 |
+| Incumbent AI Vacuum | ${vai.factors.incumbentAIVacuum}/10 |
+| Workflow Density | ${vai.factors.workflowDensity}/10 |
+| Regulatory Complexity | ${vai.factors.regulatoryComplexity}/10 |
+| SOR to SOA Viability | ${vai.factors.sorToSoaViability}/10 |
+| **Total** | **${vai.total}/100** |
+
+---
+
+# Addressable Market · ${vai.factors.addressableMarket}/10
+
+**What it measures:** Whether the winnable market supports a meaningful software outcome with dense ICP and strong adoption curve.
+
+**Why it matters to AQL:** A strong SoR-to-SoA path still needs a big enough, focused-enough market.
+
+**${scored.vertical} Analysis:**
+${factors.addressableMarket || 'Market analysis for this vertical.'}
+
+---
+
+# Competitive Runway · ${vai.factors.competitiveRunway}/10
+
+**What it measures:** Whether the market has few modern competitors, limited bundling pressure, or clear white space.
+
+**Why it matters to AQL:** Strong runway gives a modern platform room to compound.
+
+**${scored.vertical} Analysis:**
+${factors.competitiveRunway || 'Competitive runway analysis.'}
+
+---
+
+# Urgency · ${vai.factors.urgency}/10
+
+**What it measures:** Whether there is a strong 'why now' driven by labor pain, compliance pressure, industry change, or roll-up dynamics.
+
+**Why it matters to AQL:** Urgency accelerates adoption and category formation.
+
+**${scored.vertical} Analysis:**
+${factors.urgency || 'Urgency analysis.'}
+
+---
+
+# Modernization Gap · ${vai.factors.modernizationGap}/10
+
+**What it measures:** Whether the market is still mostly legacy, manual, or greenfield.
+
+**Why it matters to AQL:** The more under-modernized the category, the larger the software opportunity.
+
+**${scored.vertical} Analysis:**
+${factors.modernizationGap || 'Modernization gap analysis.'}
+
+---
+
+# Incumbent Weakness & Customer Dissatisfaction
+
+**Incumbent Weakness (${vai.factors.incumbentWeakness}/10):**
+${factors.incumbentWeakness || 'Incumbent weakness analysis.'}
+
+**Customer Dissatisfaction (${vai.factors.customerDissatisfaction}/10):**
+${factors.customerDissatisfaction || 'Customer dissatisfaction analysis.'}
+
+---
+
+# Incumbent AI Vacuum · ${vai.factors.incumbentAIVacuum}/10
+
+**What it measures:** Whether incumbents have not yet built real AI and the window remains open.
+
+**Why it matters to AQL:** A weak incumbent AI posture creates more room for the platform to strengthen.
+
+**${scored.vertical} Analysis:**
+${factors.incumbentAIVacuum || 'AI vacuum analysis.'}
+
+---
+
+# Workflow Density & Regulatory Complexity
+
+**Workflow Density (${vai.factors.workflowDensity}/10):**
+${factors.workflowDensity || 'Workflow density analysis.'}
+
+**Regulatory Complexity (${vai.factors.regulatoryComplexity}/10):**
+${factors.regulatoryComplexity || 'Regulatory complexity analysis.'}
+
+---
+
+# SOR to SOA Viability · ${vai.factors.sorToSoaViability}/10
+
+**What it measures:** Whether a vertical offers a clear and durable path for a System of Record to become the action layer.
+
+**Why it matters to AQL:** This is the key test of whether the category supports durable action-layer ownership and can defend against horizontal AI platforms.
+
+**${scored.vertical} Analysis:**
+${factors.sorToSoaViability || 'SOR to SOA viability analysis.'}
+
+---
+
+`;
+}
+
+function buildVAI2Slides(scored, n) {
+  const vai = scored.vai2;
+  const factors = n.vai2Factors || {};
+  
+  return `# Vertical Attractiveness · ${vai.total}/100
+
+## VAI 2.0 Framework — AI Wedge Vertical Opportunity
+
+**What VAI 2.0 Measures:**
+Whether the vertical itself is structurally fertile for an AI-native wedge to enter, prove ROI, gain control points, and expand into the System of Action.
+
+| Factor | Score |
+|---|---|
+| Weak Incumbent AI Defense | ${vai.factors.weakIncumbentAI}/12 |
+| Accessible Control Points | ${vai.factors.accessibleControlPoints}/12 |
+| Open Workflow Rails | ${vai.factors.openWorkflowRails}/12 |
+| Repeatable AI Workflows | ${vai.factors.repeatableAIWorkflows}/10 |
+| Painful Work Worth Automating | ${vai.factors.painfulWork}/10 |
+| Independent Data Capture | ${vai.factors.independentDataCapture}/10 |
+| Strong Learning Signals | ${vai.factors.learningSignals}/8 |
+| Clear ROI Measurement | ${vai.factors.clearROI}/8 |
+| Fast Buyer Adoption | ${vai.factors.fastBuyerAdoption}/10 |
+| Natural Path to SOA | ${vai.factors.pathToSOA}/8 |
+| **Total** | **${vai.total}/100** |
+
+---
+
+# Weak Incumbent AI Defense · ${vai.factors.weakIncumbentAI}/12
+
+**What it measures:** Incumbent platforms are slow or weak at delivering real AI workflow automation; they ship copilots, not work execution.
+
+**Why it matters to AQL:** Wedges win when incumbents cannot respond quickly with real automation because of legacy architecture, culture, or incentives.
+
+**${scored.vertical} Analysis:**
+${factors.weakIncumbentAI || 'Incumbent AI defense analysis.'}
+
+---
+
+# Accessible Control Points · ${vai.factors.accessibleControlPoints}/12
+
+**What it measures:** Meaningful control points exist outside incumbent lock-in, such as scheduling, billing, intake, payments, claims, or collections.
+
+**Why it matters to AQL:** To become SoA, the wedge must seize a control point that matters economically or operationally without needing permission.
+
+**${scored.vertical} Analysis:**
+${factors.accessibleControlPoints || 'Control points analysis.'}
+
+---
+
+# Open Workflow Rails · ${vai.factors.openWorkflowRails}/12
+
+**What it measures:** Critical work runs on rails incumbents cannot fully control, such as phone, SMS, email, web forms, documents, claims, or payments rails.
+
+**Why it matters to AQL:** Open rails let wedges operate and scale even if the SoR blocks deep integration; this is the wedge's beachhead.
+
+**${scored.vertical} Analysis:**
+${factors.openWorkflowRails || 'Workflow rails analysis.'}
+
+---
+
+# Repeatable AI Workflows · ${vai.factors.repeatableAIWorkflows}/10
+
+**What it measures:** The vertical has frequent workflows AI can execute repeatedly across many operators.
+
+**Why it matters to AQL:** Repeatability drives productization, better unit economics, and faster learning curves across customers.
+
+**${scored.vertical} Analysis:**
+${factors.repeatableAIWorkflows || 'Repeatability analysis.'}
+
+---
+
+# Painful Work Worth Automating · ${vai.factors.painfulWork}/10
+
+**What it measures:** The work is hated, time-consuming, or revenue-leaking, such as admin burden, follow-ups, documentation, collections, or compliance.
+
+**Why it matters to AQL:** Pain creates urgency, adoption, and willingness to change behavior, especially when labor is constrained or expensive.
+
+**${scored.vertical} Analysis:**
+${factors.painfulWork || 'Pain analysis.'}
+
+---
+
+# Independent Data Capture · ${vai.factors.independentDataCapture}/10
+
+**What it measures:** The wedge can access enough data without SoR database permission, such as calls, messages, docs, forms, transactions, or claims files.
+
+**Why it matters to AQL:** If the wedge needs privileged SoR data on day 1, it dies in procurement or integration hell; independence accelerates adoption.
+
+**${scored.vertical} Analysis:**
+${factors.independentDataCapture || 'Data capture analysis.'}
+
+---
+
+# Learning Signals & ROI Measurement
+
+**Strong Learning Signals (${vai.factors.learningSignals}/8):**
+${factors.learningSignals || 'Learning signals analysis.'}
+
+**Clear ROI Measurement (${vai.factors.clearROI}/8):**
+${factors.clearROI || 'ROI measurement analysis.'}
+
+---
+
+# Fast Buyer Adoption · ${vai.factors.fastBuyerAdoption}/10
+
+**What it measures:** Operators can trial and adopt quickly, with decentralized decisions and low procurement friction.
+
+**Why it matters to AQL:** Wedges spread faster in bottoms-up markets; long procurement cycles kill wedge velocity.
+
+**${scored.vertical} Analysis:**
+${factors.fastBuyerAdoption || 'Adoption analysis.'}
+
+---
+
+# Natural Path to System of Action · ${vai.factors.pathToSOA}/8
+
+**What it measures:** There is a clear adjacency map from entry wedge to broader operating layer, such as intake → schedule → billing or lead → quote → pay.
+
+**Why it matters to AQL:** AQL cares about who becomes the operating system; this is the structural path from wedge to platform.
+
+**${scored.vertical} Analysis:**
+${factors.pathToSOA || 'SOA path analysis.'}
+
+---
+
+`;
+}
+
+// ── GAMMA API ──
+async function callGamma(content, title) {
+  const PROXY_URL = 'https://YOUR-VERCEL-URL.vercel.app/api/gamma';
+  
+  if (PROXY_URL.includes('YOUR-VERCEL-URL')) {
+    throw new Error('Gamma proxy not configured — update PROXY_URL in callGamma()');
+  }
+
+  const safeContent = content.slice(0, 200000);
+  const safeTitle = title.replace(/"/g, "'").slice(0, 200);
+
+  const gammaInstructions = 'IC-grade investment presentation for AQL Growth (vertical SaaS + AI). Professional, institutional, data-dense. Business overview + dual-framework analysis (SAI + VAI). No generic statements. Use exact structure provided.';
+
+  pipeLog('Posting to Gamma…', 'var(--teal)');
+
+  const postRes = await fetch(PROXY_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      path: '/v1.0/generations',
+      body: {
+        inputText: safeContent,
+        title: safeTitle,
+        format: 'presentation',
+        textMode: 'preserve',
+        numCards: 40,
+        themeId: 'h0a0es0siz8e9yi',
+        additionalInstructions: gammaInstructions.slice(0, 2000)
+      }
+    })
+  }).catch(err => {
+    throw new Error('Gamma proxy unreachable: ' + err.message);
+  });
+
+  if (!postRes.ok) {
+    const errText = await postRes.text().catch(() => '');
+    throw new Error('Gamma API error ' + postRes.status + ': ' + errText.slice(0, 200));
+  }
+
+  const postData = await postRes.json();
+  if (postData.error) throw new Error(postData.error.message || postData.error);
+
+  const genId = postData.generationId;
+  if (!genId) throw new Error('No generationId returned from Gamma');
+
+  pipeLog('Gamma generation started: ' + genId, 'var(--teal)');
+  pipeLog('Polling for completion…', 'var(--teal)');
+
+  // Poll for completion
+  for (let i = 0; i < 60; i++) {
+    await new Promise(r => setTimeout(r, 3000));
+    
+    const statusRes = await fetch(PROXY_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        path: `/v1.0/generations/${genId}`,
+        body: {}
+      })
+    }).catch(() => null);
+
+    if (!statusRes || !statusRes.ok) continue;
+
+    const statusData = await statusRes.json().catch(() => null);
+    if (!statusData) continue;
+
+    if (statusData.status === 'completed' && statusData.gammaUrl) {
+      pipeLog('Gamma completed: ' + statusData.gammaUrl, '#00d4b4');
+      return statusData.gammaUrl;
+    }
+
+    if (statusData.status === 'failed') {
+      throw new Error('Gamma generation failed');
+    }
+
+    if (i % 5 === 0) {
+      pipeLog(`Polling... (${i * 3}s elapsed)`, 'var(--faint)');
+    }
+  }
+
+  pipeLog('Polling timeout — check Gamma dashboard', 'var(--amber)');
+  return null;
+}
+
+// ── CLAUDE API ──
+async function callClaude(prompt, maxTok=8000, useWebSearch=false, temperature=1) {
+  if (!ANTHROPIC_API_KEY) {
+    throw new Error('API key not set');
+  }
+  
+  const body = {
+    model:'claude-sonnet-4-20250514',
+    max_tokens: maxTok,
+    temperature: temperature,
+    messages:[{role:'user',content:prompt}]
+  };
+  if (useWebSearch) {
+    body.tools = [{ type: 'web_search_20250305', name: 'web_search' }];
+  }
+  
+  let res;
+  try {
+    // Call configured proxy URL
+    res = await fetch(ANTHROPIC_PROXY_URL, {
+      method:'POST', 
+      headers:{
+        'Content-Type':'application/json',
+        'anthropic-version': '2023-06-01',
+        'x-api-key': ANTHROPIC_API_KEY
+      },
+      body: JSON.stringify(body)
+    });
+  } catch (fetchErr) {
+    console.error('Fetch error:', fetchErr);
+    throw new Error('Network error calling Anthropic API: ' + fetchErr.message + ' (Check console for details)');
+  }
+  
+  if (!res.ok) {
+    const errBody = await res.text().catch(() => '');
+    console.error('API error response:', errBody);
+    throw new Error('API ' + res.status + (errBody ? ': ' + errBody.slice(0, 300) : ''));
+  }
+  const d = await res.json();
+  if (d.error) throw new Error(d.error.message);
+  return (d.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('');
+}
+
+function parseJSON(txt) {
+  // Log first 1000 chars for debugging
+  if (txt.length > 2000) {
+    console.log('Claude response (first 1000 chars):', txt.slice(0, 1000));
+    console.log('Claude response (last 500 chars):', txt.slice(-500));
+  } else {
+    console.log('Claude response (full):', txt);
+  }
+  
+  // Strategy 1: Try to find JSON between markdown fences
+  const fenceMatch = txt.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
+  if (fenceMatch && fenceMatch[1]) {
+    try {
+      return JSON.parse(fenceMatch[1].trim());
+    } catch (e) {
+      console.warn('JSON in fences failed to parse:', e.message);
+    }
+  }
+  
+  // Strategy 2: Try to find JSON object (look for outermost { ... })
+  const jsonMatch = txt.match(/\{[\s\S]*\}/);
+  if (jsonMatch) {
+    try {
+      return JSON.parse(jsonMatch[0]);
+    } catch (e) {
+      console.warn('Extracted JSON object failed to parse:', e.message);
+    }
+  }
+  
+  // Strategy 3: Remove common non-JSON patterns and try
+  let cleaned = txt
+    .replace(/```json|```/g, '')  // Remove markdown fences
+    .replace(/^[^{]*/, '')         // Remove everything before first {
+    .replace(/[^}]*$/, '')         // Remove everything after last }
+    .trim();
+  
+  try {
+    return JSON.parse(cleaned);
+  } catch (e) {
+    console.error('All parsing strategies failed');
+    console.error('Original text length:', txt.length);
+    console.error('Cleaned text:', cleaned.slice(0, 500));
+    throw new Error('JSON parse failed: ' + e.message + ' | First 200 chars: ' + txt.slice(0, 200));
+  }
+}
+
+// ── INIT ──
+refreshGrid();
+</script>
+<!-- DETAIL PANEL MODAL -->
+<div class="modal-overlay" id="detailModal" style="display:none">
+  <div class="modal" style="max-width:900px">
+    <div class="modal-head">
+      <div class="modal-title" id="detail-title">Company Details</div>
+      <button onclick="closeDetailPanel()" style="background:none;border:none;color:var(--muted);font-size:24px;cursor:pointer">&times;</button>
+    </div>
+    <div class="modal-body" id="detail-body" style="max-height:70vh;overflow-y:auto"></div>
+  </div>
+</div>
+
+<script>
+let currentDetailTab = 'overview';
+
+function showDetailPanel(idx) {
+  const co = COMPANIES[idx];
+  if (!co) return;
+  
+  const isPlay1 = co.play === 'Play1';
+  const sai = isPlay1 ? co.sai1 : co.sai2;
+  const vai = isPlay1 ? co.vai1 : co.vai2;
+  const n = co.narrative || {};
+  
+  $('detail-title').textContent = co.name;
+  $('detailModal').setAttribute('data-idx', idx);
+  
+  // Tab buttons - restructured
+  let html = `
+    <div style="display:flex;gap:8px;margin-bottom:30px;border-bottom:1px solid rgba(255,255,255,0.05)">
+      <button onclick="switchDetailTab('overview')" id="tab-overview" class="detail-tab active">Company Overview</button>
+      <button onclick="switchDetailTab('sai')" id="tab-sai" class="detail-tab">${isPlay1 ? 'SAI 1.0 — Modern SOR' : 'SAI 2.0 — AI Wedge'}</button>
+      <button onclick="switchDetailTab('vai')" id="tab-vai" class="detail-tab">${isPlay1 ? 'VAI 1.0 — SOR→SOA Vertical' : 'VAI 2.0 — Wedge→SOA Vertical'}</button>
+    </div>
+    
+    <div id="detail-content"></div>
+  `;
+  
+  $('detail-body').innerHTML = html;
+  $('detailModal').style.display = 'flex';
+  currentDetailTab = 'overview';
+  renderDetailTab(co);
+}
+
+function switchDetailTab(tab) {
+  currentDetailTab = tab;
+  document.querySelectorAll('.detail-tab').forEach(t => t.classList.remove('active'));
+  $('tab-' + tab).classList.add('active');
+  
+  const idx = parseInt($('detailModal').getAttribute('data-idx'));
+  renderDetailTab(COMPANIES[idx]);
+}
+
+function renderDetailTab(co) {
+  if (!co) return;
+  
+  const isPlay1 = co.play === 'Play1';
+  const sai = isPlay1 ? co.sai1 : co.sai2;
+  const vai = isPlay1 ? co.vai1 : co.vai2;
+  const n = co.narrative || {};
+  
+  // Handle missing metadata with fallbacks
+  const hq = co.hq && co.hq !== 'Unknown' ? co.hq : 'HQ not found';
+  const employees = co.employees && co.employees !== 'Unknown' ? co.employees : 'Team size unknown';
+  const arr = co.arr && co.arr !== 'Unknown' ? co.arr : 'ARR not disclosed';
+  
+  let html = '';
+  
+  // ═══════════════════════════════════════════════════════
+  // TAB 1: COMPANY OVERVIEW + SUMMARY SCORES
+  // ═══════════════════════════════════════════════════════
+  if (currentDetailTab === 'overview') {
+    html = `
+      <div style="margin-bottom:30px">
+        <div style="font-size:18px;font-weight:700;margin-bottom:10px">${co.vertical}</div>
+        <div style="color:var(--muted);margin-bottom:15px">${hq} · ${employees} · ${arr}</div>
+        <div style="display:inline-block;background:rgba(0,212,180,0.1);color:var(--teal);padding:6px 12px;border-radius:6px;font-size:12px;font-weight:600">${co.play}</div>
+      </div>
+      
+      ${n.executiveSummary ? `
+      <div style="margin-bottom:25px">
+        <div style="font-size:14px;font-weight:700;margin-bottom:10px;color:var(--teal)">Executive Summary</div>
+        <div style="font-size:13px;line-height:1.7;color:var(--text)">${n.executiveSummary}</div>
+      </div>
+      ` : '<div style="padding:20px;background:rgba(255,255,255,0.02);border-radius:8px;color:var(--faint);text-align:center;margin-bottom:25px">Executive summary not available - narrative generation may have timed out</div>'}
+      
+      ${n.businessOverview ? `
+      <div style="margin-bottom:25px">
+        <div style="font-size:14px;font-weight:700;margin-bottom:10px">Business Overview</div>
+        <div style="font-size:13px;line-height:1.7;color:var(--muted)">${n.businessOverview}</div>
+      </div>
+      ` : ''}
+      
+      ${n.productDeepDive ? `
+      <div style="margin-bottom:25px">
+        <div style="font-size:14px;font-weight:700;margin-bottom:10px">Product</div>
+        <div style="font-size:13px;line-height:1.7;color:var(--muted)">${n.productDeepDive}</div>
+      </div>
+      ` : ''}
+      
+      ${n.marketOverview ? `
+      <div style="margin-bottom:25px">
+        <div style="font-size:14px;font-weight:700;margin-bottom:10px">Market</div>
+        <div style="font-size:13px;line-height:1.7;color:var(--muted)">${n.marketOverview}</div>
+      </div>
+      ` : ''}
+      
+      <div style="margin-top:40px;padding-top:30px;border-top:1px solid rgba(255,255,255,0.05)">
+        <div style="font-size:16px;font-weight:700;margin-bottom:20px">Summary Scoring</div>
+        
+        <!-- SAI Summary Card -->
+        <div style="background:rgba(0,212,180,0.05);padding:20px;border-radius:8px;margin-bottom:15px;cursor:pointer" onclick="switchDetailTab('sai')">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div>
+              <div style="font-size:14px;font-weight:700;color:var(--teal);margin-bottom:4px">${isPlay1 ? 'SAI 1.0' : 'SAI 2.0'}</div>
+              <div style="font-size:12px;color:var(--muted)">${sai.classification}</div>
+            </div>
+            <div style="font-size:32px;font-weight:800;color:var(--teal)">${sai.total}<span style="font-size:16px;color:var(--faint)">/${isPlay1 ? '100' : sai.max}</span></div>
+          </div>
+          <div style="margin-top:15px;padding-top:15px;border-top:1px solid rgba(0,212,180,0.1);font-size:11px;color:var(--muted)">
+            Click to see full dimension breakdown →
+          </div>
+        </div>
+        
+        <!-- VAI Summary Card -->
+        <div style="background:rgba(138,99,210,0.05);padding:20px;border-radius:8px;cursor:pointer" onclick="switchDetailTab('vai')">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div>
+              <div style="font-size:14px;font-weight:700;color:var(--purple);margin-bottom:4px">${isPlay1 ? 'VAI 1.0' : 'VAI 2.0'}</div>
+              <div style="font-size:12px;color:var(--muted)">${vai.verticalClass || 'Vertical Score'}</div>
+            </div>
+            <div style="font-size:32px;font-weight:800;color:var(--purple)">${vai.total}<span style="font-size:16px;color:var(--faint)">/100</span></div>
+          </div>
+          <div style="margin-top:15px;padding-top:15px;border-top:1px solid rgba(138,99,210,0.1);font-size:11px;color:var(--muted)">
+            Click to see full factor breakdown →
+          </div>
+        </div>
+      </div>
+      
+      ${n.investmentView ? `
+      <div style="margin-top:30px;padding-top:30px;border-top:1px solid rgba(255,255,255,0.05)">
+        <div style="font-size:14px;font-weight:700;margin-bottom:10px;color:var(--teal)">AQL Investment View</div>
+        <div style="font-size:13px;line-height:1.7;color:var(--text)">${n.investmentView}</div>
+      </div>
+      ` : ''}
+    `;
+    
+  // ═══════════════════════════════════════════════════════
+  // TAB 2: SAI DIMENSION BREAKDOWN
+  // ═══════════════════════════════════════════════════════
+  } else if (currentDetailTab === 'sai') {
+    html = `
+      <div style="margin-bottom:30px">
+        <div style="font-size:18px;font-weight:700;margin-bottom:10px">${isPlay1 ? 'SAI 1.0 — Modern SOR → SOA' : 'SAI 2.0 — AI Wedge → SOA'}</div>
+        <div style="color:var(--muted);margin-bottom:15px">${isPlay1 ? 'Measures whether a modern vertical SOR has the structural gravity to evolve into a System of Action' : 'Measures whether an AI-native wedge can build independent rails and become the action layer'}</div>
+      </div>
+      
+      <div style="background:rgba(0,212,180,0.05);padding:25px;border-radius:8px;margin-bottom:30px">
+        <div style="font-size:32px;font-weight:800;color:var(--teal);margin-bottom:5px">${sai.total}/${isPlay1 ? '100' : sai.max}</div>
+        <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:5px">${sai.classification}</div>
+        <div style="font-size:12px;color:var(--muted)">Company-level framework score</div>
+      </div>
+      
+      <div style="font-size:14px;font-weight:700;margin-bottom:20px">Dimension Breakdown</div>
+    `;
+    
+    // SAI dimensions with narratives
+    const saiDims = Object.entries(sai.dims || {});
+    const saiDimKey = isPlay1 ? 'sai1Dimensions' : 'sai2Dimensions';
+    const saiNarratives = n[saiDimKey] || {};
+    
+    saiDims.forEach(([key, val], idx) => {
+      const label = key.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase());
+      const narrative = saiNarratives[key] || '';
+      
+      html += `
+        <div style="padding:20px;background:${idx % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'transparent'};border-radius:8px;margin-bottom:12px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:${narrative ? '12px' : '0'}">
+            <div style="font-weight:700;color:var(--text);font-size:14px">${label}</div>
+            <div style="font-weight:800;color:var(--teal);font-size:18px">${val}</div>
+          </div>
+          ${narrative ? `<div style="font-size:12px;line-height:1.7;color:var(--muted)">${narrative}</div>` : '<div style="font-size:11px;color:var(--faint);font-style:italic">Analysis not available</div>'}
+        </div>
+      `;
+    });
+    
+  // ═══════════════════════════════════════════════════════
+  // TAB 3: VAI FACTOR BREAKDOWN
+  // ═══════════════════════════════════════════════════════
+  } else if (currentDetailTab === 'vai') {
+    html = `
+      <div style="margin-bottom:30px">
+        <div style="font-size:18px;font-weight:700;margin-bottom:10px">${isPlay1 ? 'VAI 1.0 — SOR→SOA Vertical Attractiveness' : 'VAI 2.0 — Wedge→SOA Vertical Attractiveness'}</div>
+        <div style="color:var(--muted);margin-bottom:15px">${isPlay1 ? 'Measures vertical attractiveness for Modern SOR → SOA thesis' : 'Measures vertical attractiveness for AI Wedge → SOA thesis'}</div>
+      </div>
+      
+      <div style="background:rgba(138,99,210,0.05);padding:25px;border-radius:8px;margin-bottom:30px">
+        <div style="font-size:32px;font-weight:800;color:var(--purple);margin-bottom:5px">${vai.total}/100</div>
+        <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:5px">${vai.verticalClass || 'Vertical Score'}</div>
+        <div style="font-size:12px;color:var(--muted)">Vertical-level framework score</div>
+      </div>
+      
+      <div style="font-size:14px;font-weight:700;margin-bottom:20px">Factor Breakdown</div>
+    `;
+    
+    // VAI factors with narratives
+    const vaiFacs = Object.entries(vai.factors || {});
+    const vaiFactKey = isPlay1 ? 'vai1Factors' : 'vai2Factors';
+    const vaiNarratives = n[vaiFactKey] || {};
+    
+    vaiFacs.forEach(([key, val], idx) => {
+      const label = key.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase());
+      const narrative = vaiNarratives[key] || '';
+      
+      html += `
+        <div style="padding:20px;background:${idx % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'transparent'};border-radius:8px;margin-bottom:12px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:${narrative ? '12px' : '0'}">
+            <div style="font-weight:700;color:var(--text);font-size:14px">${label}</div>
+            <div style="font-weight:800;color:var(--purple);font-size:18px">${val}</div>
+          </div>
+          ${narrative ? `<div style="font-size:12px;line-height:1.7;color:var(--muted)">${narrative}</div>` : '<div style="font-size:11px;color:var(--faint);font-style:italic">Analysis not available</div>'}
+        </div>
+      `;
+    });
+  }
+  
+  if (co.gammaUrl) {
+    html += `
+      <div style="text-align:center;margin-top:40px;padding-top:30px;border-top:1px solid rgba(255,255,255,0.05)">
+        <button class="tb-btn primary" onclick="window.open('${co.gammaUrl}', '_blank')" style="padding:12px 24px">Open Full IC Deck in Gamma ↗</button>
+      </div>
+    `;
+  }
+  
+  $('detail-content').innerHTML = html;
+}
+
+function closeDetailPanel() {
+  $('detailModal').style.display = 'none';
+}
+</script>
+
+</body>
+</html>
