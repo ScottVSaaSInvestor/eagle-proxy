@@ -2349,6 +2349,17 @@ function parseJSON(txt) {
   try {
     return JSON.parse(cleaned);
   } catch (e) {
+    console.warn('Strategy 3 failed, trying Strategy 4 (single quote conversion)');
+  }
+  
+  // Strategy 4: Convert single quotes to double quotes (for malformed JSON from Claude)
+  try {
+    // Replace single quotes with double quotes for JSON keys/values
+    // This handles cases where Claude returns: { 'key': 'value' } instead of { "key": "value" }
+    let fixedQuotes = cleaned.replace(/'/g, '"');
+    console.log('Strategy 4: Converted single quotes to double quotes');
+    return JSON.parse(fixedQuotes);
+  } catch (e) {
     console.error('All parsing strategies failed');
     console.error('Original text length:', txt.length);
     console.error('Cleaned text:', cleaned.slice(0, 500));
