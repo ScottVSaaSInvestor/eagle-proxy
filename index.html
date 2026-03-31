@@ -710,33 +710,60 @@ async function runNarrativeGeneration(scoredCompany, researchRaw) {
     const researchSlice = researchRaw.slice(0, 40000);
     
     // Build 3 chunk prompts
-    const chunk1Prompt = buildNarrativeChunk1(scoredCompany, researchSlice);
-    const chunk2Prompt = buildNarrativeChunk2(scoredCompany, researchSlice);
-    const chunk3Prompt = buildNarrativeChunk3(scoredCompany, researchSlice);
+    const chunkConfigs = [
+      { prompt: buildNarrativeChunk1(scoredCompany, researchSlice), name: 'Business Context', num: 1 },
+      { prompt: buildNarrativeChunk2(scoredCompany, researchSlice), name: 'Framework Analysis', num: 2 },
+      { prompt: buildNarrativeChunk3(scoredCompany, researchSlice), name: 'Investment Summary', num: 3 }
+    ];
     
     pipeLog('Chunk 1: Business context…', 'var(--muted)');
     pipeLog('Chunk 2: Framework analysis…', 'var(--muted)');
     pipeLog('Chunk 3: Investment summary…', 'var(--muted)');
     
-    // Execute 3 chunks in parallel (each ~18s, total ~25s)
-    const [chunk1Raw, chunk2Raw, chunk3Raw] = await Promise.all([
-      Promise.race([
-        callClaude(chunk1Prompt, 1500, false, 0),
-        new Promise((_, rej) => setTimeout(() => rej(new Error('Chunk 1 timeout')), 25000))
-      ]),
-      Promise.race([
-        callClaude(chunk2Prompt, 1500, false, 0),
-        new Promise((_, rej) => setTimeout(() => rej(new Error('Chunk 2 timeout')), 25000))
-      ]),
-      Promise.race([
-        callClaude(chunk3Prompt, 1500, false, 0),
-        new Promise((_, rej) => setTimeout(() => rej(new Error('Chunk 3 timeout')), 25000))
-      ])
-    ]);
+    // Execute chunks SEQUENTIALLY with 50s timeout and retry logic
+    const CHUNK_TIMEOUT = 50000; // 50 seconds (Vercel Pro = 60s limit)
+    const chunks = [];
+    
+    for (const config of chunkConfigs) {
+      let chunkRaw = null;
+      let attempt = 1;
+      const maxAttempts = 2; // Original + 1 retry
+      
+      while (attempt <= maxAttempts && !chunkRaw) {
+        try {
+          const attemptSuffix = attempt > 1 ? ` (retry ${attempt - 1})` : '';
+          pipeLog(`→ Chunk ${config.num}: ${config.name}${attemptSuffix}…`, 'var(--muted)');
+          console.log(`Executing Chunk ${config.num}${attemptSuffix}...`);
+          
+          chunkRaw = await Promise.race([
+            callClaude(config.prompt, 1500, false, 0),
+            new Promise((_, rej) => setTimeout(() => rej(new Error(`Chunk ${config.num} timeout after 50s`)), CHUNK_TIMEOUT))
+          ]);
+          
+          console.log(`✓ Chunk ${config.num} completed (${chunkRaw.length} chars)`);
+          pipeLog(`✓ Chunk ${config.num} complete`, '#00d4b4');
+          
+        } catch (err) {
+          console.error(`Chunk ${config.num} attempt ${attempt} failed:`, err.message);
+          
+          if (attempt < maxAttempts) {
+            pipeLog(`⚠ Chunk ${config.num} ${err.message} - retrying…`, 'var(--amber)');
+            attempt++;
+            await new Promise(resolve => setTimeout(resolve, 1000)); // 1s pause before retry
+          } else {
+            pipeLog(`✗ Chunk ${config.num} failed after ${maxAttempts} attempts`, 'var(--red)');
+            throw new Error(`Chunk ${config.num} failed: ${err.message}`);
+          }
+        }
+      }
+      
+      chunks.push(chunkRaw);
+    }
     
     // Parse and merge chunks
     let narrative = null;
     try {
+      const [chunk1Raw, chunk2Raw, chunk3Raw] = chunks;
       const c1 = parseJSON(chunk1Raw);
       const c2 = parseJSON(chunk2Raw);
       const c3 = parseJSON(chunk3Raw);
