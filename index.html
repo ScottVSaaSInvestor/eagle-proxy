@@ -704,24 +704,30 @@ async function runNarrativeGeneration(scoredCompany, researchRaw) {
     COMPANIES[0].narrativeStatus = 'generating';
     refreshGrid();
     
-    pipeLog('Building IC-grade narrative (3 chunks)…', 'var(--teal)');
+    pipeLog('Building IC-grade narrative (6 detailed chunks)…', 'var(--teal)');
     setPipeStep('narrative','active');
     
     const researchSlice = researchRaw.slice(0, 40000);
     
-    // Build 3 chunk prompts
+    // Build 6 chunk prompts for IC-depth analysis
     const chunkConfigs = [
-      { prompt: buildNarrativeChunk1(scoredCompany, researchSlice), name: 'Business Context', num: 1 },
-      { prompt: buildNarrativeChunk2(scoredCompany, researchSlice), name: 'Framework Analysis', num: 2 },
-      { prompt: buildNarrativeChunk3(scoredCompany, researchSlice), name: 'Investment Summary', num: 3 }
+      { prompt: buildNarrativeChunk1(scoredCompany, researchSlice), name: 'Executive Context', num: 1, tokens: 1500 },
+      { prompt: buildNarrativeChunk2(scoredCompany, researchSlice), name: 'Market Intelligence', num: 2, tokens: 1500 },
+      { prompt: buildNarrativeChunk3(scoredCompany, researchSlice), name: 'SAI Dimensions 1-3', num: 3, tokens: 2000 },
+      { prompt: buildNarrativeChunk4(scoredCompany, researchSlice), name: 'SAI Dimensions 4-6', num: 4, tokens: 2000 },
+      { prompt: buildNarrativeChunk5(scoredCompany, researchSlice), name: 'VAI Factors (All 10)', num: 5, tokens: 2500 },
+      { prompt: buildNarrativeChunk6(scoredCompany, researchSlice), name: 'Investment Summary', num: 6, tokens: 1500 }
     ];
     
-    pipeLog('Chunk 1: Business context…', 'var(--muted)');
-    pipeLog('Chunk 2: Framework analysis…', 'var(--muted)');
-    pipeLog('Chunk 3: Investment summary…', 'var(--muted)');
+    pipeLog('Chunk 1: Executive context…', 'var(--muted)');
+    pipeLog('Chunk 2: Market intelligence…', 'var(--muted)');
+    pipeLog('Chunk 3: SAI dimensions 1-3…', 'var(--muted)');
+    pipeLog('Chunk 4: SAI dimensions 4-6…', 'var(--muted)');
+    pipeLog('Chunk 5: VAI factors (all 10)…', 'var(--muted)');
+    pipeLog('Chunk 6: Investment summary…', 'var(--muted)');
     
-    // Execute chunks SEQUENTIALLY with 50s timeout and retry logic
-    const CHUNK_TIMEOUT = 50000; // 50 seconds (Vercel Pro = 60s limit)
+    // Execute chunks SEQUENTIALLY with 60s timeout and retry logic
+    const CHUNK_TIMEOUT = 60000; // 60 seconds (Vercel Pro max - we need it for larger chunks)
     const chunks = [];
     
     for (const config of chunkConfigs) {
@@ -736,11 +742,12 @@ async function runNarrativeGeneration(scoredCompany, researchRaw) {
           console.log(`Executing Chunk ${config.num}${attemptSuffix}...`);
           
           chunkRaw = await Promise.race([
-            callClaude(config.prompt, 1500, false, 0),
-            new Promise((_, rej) => setTimeout(() => rej(new Error(`Chunk ${config.num} timeout after 50s`)), CHUNK_TIMEOUT))
+            callClaude(config.prompt, config.tokens, false, 0),
+            new Promise((_, rej) => setTimeout(() => rej(new Error(`Chunk ${config.num} timeout after 60s`)), CHUNK_TIMEOUT))
           ]);
           
           console.log(`✓ Chunk ${config.num} completed (${chunkRaw.length} chars)`);
+          console.log(`✓ Chunk ${config.num} preview:`, chunkRaw.slice(0, 200));
           pipeLog(`✓ Chunk ${config.num} complete`, '#00d4b4');
           
         } catch (err) {
@@ -763,13 +770,51 @@ async function runNarrativeGeneration(scoredCompany, researchRaw) {
     // Parse and merge chunks
     let narrative = null;
     try {
-      const [chunk1Raw, chunk2Raw, chunk3Raw] = chunks;
+      const [chunk1Raw, chunk2Raw, chunk3Raw, chunk4Raw, chunk5Raw, chunk6Raw] = chunks;
+      
+      console.log('Parsing chunk 1...');
       const c1 = parseJSON(chunk1Raw);
+      console.log('Chunk 1 keys:', Object.keys(c1));
+      
+      console.log('Parsing chunk 2...');
       const c2 = parseJSON(chunk2Raw);
+      console.log('Chunk 2 keys:', Object.keys(c2));
+      
+      console.log('Parsing chunk 3...');
       const c3 = parseJSON(chunk3Raw);
-      narrative = { ...c1, ...c2, ...c3 };
-      console.log('Narrative chunks merged:', Object.keys(narrative));
-      pipeLog('All 3 chunks merged successfully!', '#00d4b4');
+      console.log('Chunk 3 keys:', Object.keys(c3));
+      
+      console.log('Parsing chunk 4...');
+      const c4 = parseJSON(chunk4Raw);
+      console.log('Chunk 4 keys:', Object.keys(c4));
+      
+      console.log('Parsing chunk 5...');
+      const c5 = parseJSON(chunk5Raw);
+      console.log('Chunk 5 keys:', Object.keys(c5));
+      
+      console.log('Parsing chunk 6...');
+      const c6 = parseJSON(chunk6Raw);
+      console.log('Chunk 6 keys:', Object.keys(c6));
+      
+      // Merge SAI dimension parts
+      const isPlay1 = scoredCompany.play === 'Play1';
+      const saiKey = isPlay1 ? 'sai1Dimensions' : 'sai2Dimensions';
+      const saiPart1Key = isPlay1 ? 'sai1DimensionsPart1' : 'sai2DimensionsPart1';
+      const saiPart2Key = isPlay1 ? 'sai1DimensionsPart2' : 'sai2DimensionsPart2';
+      
+      const mergedSAI = {
+        [saiKey]: {
+          ...c3[saiPart1Key],
+          ...c4[saiPart2Key]
+        }
+      };
+      
+      console.log('Merged SAI dimensions:', Object.keys(mergedSAI[saiKey]));
+      
+      narrative = { ...c1, ...c2, ...mergedSAI, ...c5, ...c6 };
+      console.log('Narrative chunks merged. Total keys:', Object.keys(narrative).length);
+      console.log('All narrative keys:', Object.keys(narrative));
+      pipeLog('All 6 chunks merged successfully!', '#00d4b4');
     } catch(e) { 
       console.error('Chunk parse error:', e);
       pipeLog('Chunk parse warning: ' + e.message, 'var(--amber)'); 
@@ -1381,89 +1426,10 @@ Total = sum of all 10 factors (max 100)`;
 }
 
 // ── NARRATIVE PROMPT BUILDER ──
-function buildNarrativePrompt(scored, research) {
-  const isPlay1 = scored.play === 'Play1';
-  const sai = isPlay1 ? scored.sai1 : scored.sai2;
-  const vai = isPlay1 ? scored.vai1 : scored.vai2;
-
-  return `You are a sharp growth equity analyst at AQL Growth. Write IC-grade narrative for "${scored.name}".
-
-COMPANY DATA:
-${JSON.stringify(scored, null, 2)}
-
-RESEARCH EVIDENCE:
-${research.slice(0, 35000)}
-
-Generate narrative content for Gamma Site (~35-40 slides). Present tense. Evidence-grounded. Institutional voice. No filler.
-
-Return ONLY valid JSON with these exact fields:
-
-{
-  "executiveSummary": "3-4 sentence investment thesis — what they do, why it matters, investment case",
-  "businessOverview": "5-6 sentences on company history, mission, what they've built",
-  "productDeepDive": "4-5 sentences on platform modules, core workflow owned",
-  "valueProposition": "3 sentences on problems solved and outcomes delivered",
-  "customerEvidence": "3-4 named customer quotes or case study results with attribution",
-  "marketOverview": "4-5 sentences on TAM/SAM/SOM, market structure, growth drivers",
-  "competitivePositioning": "4-5 sentences on where they sit vs legacy/modern/wedges",
-  ${isPlay1 ? `
-  "sai1Dimensions": {
-    "dataGravity": "3 sentences: what data they own, why it's valuable, evidence",
-    "workflowGravity": "3 sentences: workflow owned end-to-end, daily use evidence",
-    "accountGravity": "3 sentences: roles using it, sponsor power, breakage impact",
-    "networkEffects": "3 sentences: coordination value, internal/external embedding",
-    "ecosystem": "3 sentences: integration depth, API, marketplace",
-    "productExtension": "3 sentences: monetizable surfaces, expansion pathways"
-  },
-  "vai1Factors": {
-    "addressableMarket": "2 sentences: TAM evidence, buyer universe",
-    "competitiveRunway": "2 sentences: white space, modern competition level",
-    "urgency": "2 sentences: why now catalyst",
-    "modernizationGap": "2 sentences: legacy penetration, modernization state",
-    "incumbentWeakness": "2 sentences: incumbent vulnerabilities",
-    "customerDissatisfaction": "2 sentences: switching readiness signals",
-    "incumbentAIVacuum": "2 sentences: incumbent AI posture",
-    "workflowDensity": "2 sentences: complexity and frequency of workflows",
-    "regulatoryComplexity": "2 sentences: compliance moat",
-    "sorToSoaViability": "2 sentences: SOR to action layer path viability and defensibility"
-  },
-  ` : `
-  "sai2Dimensions": {
-    "jobGravity": "3 sentences: job pain, frequency, economic impact",
-    "workflowExecution": "3 sentences: autonomy level, what it executes",
-    "railIndependence": "3 sentences: independence from incumbent SOR",
-    "outcomeExhaust": "3 sentences: feedback signals, outcome labeling",
-    "compoundingLoop": "3 sentences: how model improves with usage",
-    "aiMoat": "3 sentences: proprietary data or model advantage",
-    "expansionPath": "3 sentences: route from wedge to SOA"
-  },
-  "vai2Factors": {
-    "weakIncumbentAI": "2 sentences: incumbent AI defense posture",
-    "accessibleControlPoints": "2 sentences: control points outside incumbent",
-    "openWorkflowRails": "2 sentences: open rails accessible",
-    "repeatableAIWorkflows": "2 sentences: workflow repeatability",
-    "painfulWork": "2 sentences: pain level and automation value",
-    "independentDataCapture": "2 sentences: data access without permission",
-    "learningSignals": "2 sentences: feedback signal strength",
-    "clearROI": "2 sentences: ROI measurement speed and clarity",
-    "fastBuyerAdoption": "2 sentences: adoption friction level",
-    "pathToSOA": "2 sentences: wedge-to-platform expansion path"
-  },
-  `}
-  "keyStrengths": ["strength 1 with evidence", "strength 2", "strength 3"],
-  "keyRisks": ["risk 1 with evidence", "risk 2", "risk 3"],
-  "scoreCeiling": "2-3 sentences on what constrains score and what would move it",
-  "openQuestions": ["DD question 1", "DD question 2", "DD question 3"],
-  "investmentView": "3-4 sentence AQL perspective — BUY/PURSUE/WATCH/PASS with rationale"
-}
-
-CRITICAL: Return ONLY the JSON object above. No markdown fences, no explanation, no preamble, no postamble. Just the raw JSON.`;
-}
-
-// ── CHUNKED NARRATIVE BUILDERS (v6.1) ──
+// ── CHUNKED NARRATIVE BUILDERS (v6.2 - IC Depth Architecture) ──
 function buildNarrativeChunk1(scored, research) {
-  // CHUNK 1: BUSINESS CONTEXT (~1500 tokens, ~18s)
-  return `You are a sharp growth equity analyst at AQL Growth. Write IC-grade business context narrative for "${scored.name}".
+  // CHUNK 1: EXECUTIVE CONTEXT (~1500 tokens, ~18s)
+  return `You are a sharp growth equity analyst at AQL Growth. Write IC-grade executive context for "${scored.name}".
 
 COMPANY DATA:
 ${JSON.stringify(scored, null, 2).slice(0, 8000)}
@@ -1471,28 +1437,22 @@ ${JSON.stringify(scored, null, 2).slice(0, 8000)}
 RESEARCH EVIDENCE:
 ${research.slice(0, 30000)}
 
-Generate business context content for IC presentation. Present tense. Evidence-grounded. Institutional voice. No filler.
+Generate executive-level business context. Present tense. Evidence-grounded. Institutional voice. IC-ready depth.
 
 Return ONLY valid JSON with these exact fields:
 
 {
-  "executiveSummary": "3-4 sentence investment thesis — what they do, why it matters, investment case",
-  "businessOverview": "5-6 sentences on company history, mission, what they've built",
-  "productDeepDive": "4-5 sentences on platform modules, core workflow owned",
-  "valueProposition": "3 sentences on problems solved and outcomes delivered",
-  "customerEvidence": "3-4 named customer quotes or case study results with attribution",
-  "marketOverview": "4-5 sentences on TAM/SAM/SOM, market structure, growth drivers",
-  "competitivePositioning": "4-5 sentences on where they sit vs legacy/modern/wedges"
+  "executiveSummary": "4-5 sentence investment thesis — what they do, market position, why it matters, investment case, AQL angle",
+  "businessOverview": "6-7 sentences: founding story, evolution, current scale (ARR/customers/employees), key milestones, funding history with lead investors and amounts, leadership team backgrounds",
+  "productDeepDive": "5-6 sentences: platform architecture, named modules/features, core workflow owned step-by-step, data captured, integration ecosystem with specific names, pricing model"
 }
 
 CRITICAL: Return ONLY the JSON object. No markdown fences, no explanation.`;
 }
 
 function buildNarrativeChunk2(scored, research) {
-  // CHUNK 2: FRAMEWORK ANALYSIS (~1500 tokens, ~18s)
-  const isPlay1 = scored.play === 'Play1';
-  
-  return `You are a sharp growth equity analyst at AQL Growth. Write IC-grade framework analysis for "${scored.name}".
+  // CHUNK 2: MARKET INTELLIGENCE (~1500 tokens, ~18s)
+  return `You are a sharp growth equity analyst at AQL Growth. Write IC-grade market intelligence for "${scored.name}".
 
 COMPANY DATA:
 ${JSON.stringify(scored, null, 2).slice(0, 8000)}
@@ -1500,53 +1460,48 @@ ${JSON.stringify(scored, null, 2).slice(0, 8000)}
 RESEARCH EVIDENCE:
 ${research.slice(0, 30000)}
 
-Generate framework dimension narratives for ${isPlay1 ? 'SAI 1.0 + VAI 1.0' : 'SAI 2.0 + VAI 2.0'}. Evidence-grounded. Institutional voice.
+Generate market and competitive intelligence. Evidence-based. Quantified. IC-ready.
+
+Return ONLY valid JSON with these exact fields:
+
+{
+  "valueProposition": "4-5 sentences: specific problems solved (quantified before-state pain), outcomes delivered (quantified after-state results), differentiation vs alternatives, switching cost drivers",
+  "customerEvidence": "4-5 specific examples: named customer with title/company, exact verbatim quote, quantified ROI metric or before/after result. Must include actual customer names and quotes from research.",
+  "marketOverview": "5-6 sentences: TAM/SAM/SOM with sources and methodology, market structure (fragmented vs consolidated), growth rate with evidence, buyer universe size, spend patterns",
+  "competitivePositioning": "5-6 sentences: where they sit in landscape (vs legacy incumbents, modern competitors, AI wedges), market share estimates, competitive moats, vulnerabilities, white space opportunities"
+}
+
+CRITICAL: Return ONLY the JSON object. No markdown fences, no explanation.`;
+}
+
+function buildNarrativeChunk3(scored, research) {
+  // CHUNK 3: SAI DIMENSIONS PART 1 (~2000 tokens, ~25s)
+  const isPlay1 = scored.play === 'Play1';
+  
+  return `You are a sharp growth equity analyst at AQL Growth. Write IC-grade SAI dimension analysis (Part 1) for "${scored.name}".
+
+COMPANY DATA:
+${JSON.stringify(scored, null, 2).slice(0, 8000)}
+
+RESEARCH EVIDENCE:
+${research.slice(0, 30000)}
+
+Generate deep-dive analysis for first 3 SAI dimensions. Evidence-heavy. Specific examples. Quantified where possible.
 
 Return ONLY valid JSON with these exact fields:
 
 {
   ${isPlay1 ? `
-  "sai1Dimensions": {
-    "dataGravity": "3 sentences: what data they own, why it's valuable, evidence",
-    "workflowGravity": "3 sentences: workflow owned end-to-end, daily use evidence",
-    "accountGravity": "3 sentences: roles using it, sponsor power, breakage impact",
-    "networkEffects": "3 sentences: coordination value, internal/external embedding",
-    "ecosystem": "3 sentences: integration depth, API, marketplace",
-    "productExtension": "3 sentences: monetizable surfaces, expansion pathways"
-  },
-  "vai1Factors": {
-    "addressableMarket": "2 sentences: TAM evidence, buyer universe",
-    "competitiveRunway": "2 sentences: white space, modern competition level",
-    "urgency": "2 sentences: why now catalyst",
-    "modernizationGap": "2 sentences: legacy penetration, modernization state",
-    "incumbentWeakness": "2 sentences: incumbent vulnerabilities",
-    "customerDissatisfaction": "2 sentences: switching readiness signals",
-    "incumbentAIVacuum": "2 sentences: incumbent AI posture",
-    "workflowDensity": "2 sentences: complexity and frequency of workflows",
-    "regulatoryComplexity": "2 sentences: compliance moat",
-    "sorToSoaViability": "2 sentences: SOR to action layer path viability and defensibility"
+  "sai1DimensionsPart1": {
+    "dataGravity": "5-6 sentences: What specific data objects/records they own (list them), longitudinal value and retention period, evidence of being canonical SOR, proprietary vs commodity data split, customer quotes about data dependency, multi-year history evidence",
+    "workflowGravity": "5-6 sentences: Complete workflow they own end-to-end (map each step), evidence of daily use with frequency data, specific roles who use it and how long per day, quotes about workflow dependency, breakage impact if platform goes down, workflow completion statistics",
+    "accountGravity": "5-6 sentences: All distinct roles using it (list 4-6 specific titles), org chart penetration (which departments), executive sponsor evidence (CEO/COO/CFO usage or mandate), business criticality classification from customers, breakage cost quantification, seat expansion patterns"
   }
   ` : `
-  "sai2Dimensions": {
-    "jobGravity": "3 sentences: job pain, frequency, economic impact",
-    "workflowExecution": "3 sentences: autonomy level, what it executes",
-    "railIndependence": "3 sentences: independence from incumbent SOR",
-    "outcomeExhaust": "3 sentences: feedback signals, outcome labeling",
-    "compoundingLoop": "3 sentences: how model improves with usage",
-    "aiMoat": "3 sentences: proprietary data or model advantage",
-    "expansionPath": "3 sentences: route from wedge to SOA"
-  },
-  "vai2Factors": {
-    "weakIncumbentAI": "2 sentences: incumbent AI defense posture",
-    "accessibleControlPoints": "2 sentences: control points outside incumbent",
-    "openWorkflowRails": "2 sentences: open rails accessible",
-    "repeatableAIWorkflows": "2 sentences: workflow repeatability",
-    "painfulWork": "2 sentences: pain level and automation value",
-    "independentDataCapture": "2 sentences: data access without permission",
-    "learningSignals": "2 sentences: feedback signal strength",
-    "clearROI": "2 sentences: ROI measurement speed and clarity",
-    "fastBuyerAdoption": "2 sentences: adoption friction level",
-    "pathToSOA": "2 sentences: wedge-to-platform expansion path"
+  "sai2DimensionsPart1": {
+    "jobGravity": "5-6 sentences: Specific job description (what work it does), frequency evidence (per day/week), economic impact quantified (time saved, cost reduced, revenue generated), job pain level before automation, evidence of repeatability and scalability",
+    "workflowExecution": "5-6 sentences: Autonomy level (suggests vs executes vs fully autonomous), specific workflow steps it handles, accuracy/error rates, human review requirements, what it produces as output, production volume evidence",
+    "railIndependence": "5-6 sentences: Which incumbent SOR it depends on (if any), data access method (API, scrape, manual), how it would function if SOR disappeared, alternative rail options, control point ownership evidence"
   }
   `}
 }
@@ -1554,8 +1509,93 @@ Return ONLY valid JSON with these exact fields:
 CRITICAL: Return ONLY the JSON object. No markdown fences, no explanation.`;
 }
 
-function buildNarrativeChunk3(scored, research) {
-  // CHUNK 3: INVESTMENT SUMMARY (~1500 tokens, ~18s)
+function buildNarrativeChunk4(scored, research) {
+  // CHUNK 4: SAI DIMENSIONS PART 2 (~2000 tokens, ~25s)
+  const isPlay1 = scored.play === 'Play1';
+  
+  return `You are a sharp growth equity analyst at AQL Growth. Write IC-grade SAI dimension analysis (Part 2) for "${scored.name}".
+
+COMPANY DATA:
+${JSON.stringify(scored, null, 2).slice(0, 8000)}
+
+RESEARCH EVIDENCE:
+${research.slice(0, 30000)}
+
+Generate deep-dive analysis for final SAI dimensions. Evidence-heavy. Specific examples. Quantified where possible.
+
+Return ONLY valid JSON with these exact fields:
+
+{
+  ${isPlay1 ? `
+  "sai1DimensionsPart2": {
+    "networkEffects": "5-6 sentences: Internal coordination flows (which roles coordinate with which), external coordination (with customers, partners, vendors), data sharing patterns, collaboration features, evidence of coordination value increasing with users, network density metrics",
+    "ecosystem": "5-6 sentences: Integration count with specific platform names, API usage statistics, marketplace presence, developer ecosystem evidence, partnership depth (surface vs deep integration), lock-in from integration web",
+    "productExtension": "5-6 sentences: Monetizable surfaces identified (payments, lending, insurance, logistics, etc.), evidence of expansion into adjacent workflows, new product launches with dates, cross-sell attach rates, platform expansion roadmap signals, TAM expansion potential"
+  }
+  ` : `
+  "sai2DimensionsPart2": {
+    "outcomeExhaust": "5-6 sentences: What feedback signals it captures, outcome labeling method, ground truth availability, signal quality and frequency, how outcomes feed back to model, measurement infrastructure",
+    "compoundingLoop": "5-6 sentences: How model improves with usage, feedback incorporation mechanism, retraining frequency, improvement metrics over time, evidence of model quality trajectory, user correction flows",
+    "aiMoat": "5-6 sentences: Proprietary training data sources, data volume and quality advantages, model architecture differentiation, competitive model comparison, replicability assessment, time-to-replicate estimate",
+    "expansionPath": "5-6 sentences: Route from wedge to SOA, adjacent workflows accessible, platform ambition evidence, land-and-expand strategy, expansion milestones, roadmap to system of action"
+  }
+  `}
+}
+
+CRITICAL: Return ONLY the JSON object. No markdown fences, no explanation.`;
+}
+
+function buildNarrativeChunk5(scored, research) {
+  // CHUNK 5: VAI FACTORS - ALL 10 (~2500 tokens, ~30s)
+  const isPlay1 = scored.play === 'Play1';
+  
+  return `You are a sharp growth equity analyst at AQL Growth. Write IC-grade VAI factor analysis (all 10 factors) for "${scored.name}".
+
+COMPANY DATA:
+${JSON.stringify(scored, null, 2).slice(0, 8000)}
+
+RESEARCH EVIDENCE:
+${research.slice(0, 30000)}
+
+Generate comprehensive VAI analysis covering all 10 factors. Evidence-based. Quantified. IC-ready depth.
+
+Return ONLY valid JSON with these exact fields:
+
+{
+  ${isPlay1 ? `
+  "vai1Factors": {
+    "addressableMarket": "3-4 sentences: TAM estimate with source and methodology, SAM calculation with buyer count, vertical concentration or fragmentation, geographic distribution, spend per customer evidence",
+    "competitiveRunway": "3-4 sentences: White space assessment, modern competition count and market share, legacy incumbent penetration, greenfield vs replacement dynamics, competitive intensity forecast",
+    "urgency": "3-4 sentences: Why now catalyst (regulation, technology shift, market event), timing evidence, urgency signals from buyers, window of opportunity assessment, catalytic event details",
+    "modernizationGap": "3-4 sentences: Legacy system penetration rates, incumbent product age, technical debt evidence, modernization readiness signals, replacement cycle timing",
+    "incumbentWeakness": "3-4 sentences: Specific incumbent vulnerabilities (product, go-to-market, economics), customer complaints with evidence, competitive response capability assessment, incumbent innovation pace",
+    "customerDissatisfaction": "3-4 sentences: NPS/CSAT of incumbents, churn signals, switching consideration evidence, RFP activity, buyer search behavior, pain severity indicators",
+    "incumbentAIVacuum": "3-4 sentences: Incumbent AI capabilities assessment, AI product launches or lack thereof, AI investment evidence, AI talent acquisition, technical capability to execute AI",
+    "workflowDensity": "3-4 sentences: Workflow complexity level, step count, exception handling requirements, frequency (hourly, daily, weekly), skill level required, automation difficulty",
+    "regulatoryComplexity": "3-4 sentences: Compliance requirements specific to vertical, regulatory moats, certification or licensing barriers, incumbent regulatory advantage, compliance cost impact",
+    "sorToSoaViability": "3-4 sentences: Clear path from SOR to action layer, monetizable workflow opportunities, platform extensibility evidence, control point ownership, defensibility of position"
+  }
+  ` : `
+  "vai2Factors": {
+    "weakIncumbentAI": "3-4 sentences: Incumbent AI defense posture, AI capabilities vs attacker, AI investment levels, AI product roadmap, technical debt constraining AI",
+    "accessibleControlPoints": "3-4 sentences: Control points outside incumbent SOR, data access options, workflow rails available, integration points, permission requirements",
+    "openWorkflowRails": "3-4 sentences: Open standards or APIs available, data portability, workflow accessibility, incumbent lock-in strength, rail ownership",
+    "repeatableAIWorkflows": "3-4 sentences: Workflow repeatability assessment, standardization level, exception handling complexity, volume of repeatable instances, automation suitability",
+    "painfulWork": "3-4 sentences: Pain level quantified (time, cost, frustration), work volume evidence, automation ROI calculation, willingness to pay for solution, pain severity distribution",
+    "independentDataCapture": "3-4 sentences: Data access method without permission, proprietary data generation, data creation vs aggregation, ownership claims, competitive data advantage",
+    "learningSignals": "3-4 sentences: Feedback signal strength and frequency, ground truth availability, outcome measurement, signal quality, learning loop speed",
+    "clearROI": "3-4 sentences: ROI measurement methodology, payback period evidence, value quantification clarity, ROI comparison to alternatives, adoption threshold economics",
+    "fastBuyerAdoption": "3-4 sentences: Adoption friction assessment, time-to-value evidence, implementation complexity, change management requirements, viral coefficient if applicable",
+    "pathToSOA": "3-4 sentences: Wedge to platform expansion strategy, adjacent workflow opportunities, land-and-expand evidence, platform vision, SOA arrival timeline estimate"
+  }
+  `}
+}
+
+CRITICAL: Return ONLY the JSON object. No markdown fences, no explanation.`;
+}
+
+function buildNarrativeChunk6(scored, research) {
+  // CHUNK 6: INVESTMENT SUMMARY (~1500 tokens, ~18s)
   return `You are a sharp growth equity analyst at AQL Growth. Write IC-grade investment summary for "${scored.name}".
 
 COMPANY DATA:
@@ -1564,19 +1604,32 @@ ${JSON.stringify(scored, null, 2).slice(0, 8000)}
 RESEARCH EVIDENCE:
 ${research.slice(0, 30000)}
 
-Generate investment summary content. Evidence-grounded. Institutional voice. Sharp perspective.
+Generate investment summary. Sharp perspective. Evidence-based. IC-ready.
 
 Return ONLY valid JSON with these exact fields:
 
 {
-  "keyStrengths": ["strength 1 with evidence", "strength 2 with evidence", "strength 3 with evidence"],
-  "keyRisks": ["risk 1 with evidence", "risk 2 with evidence", "risk 3 with evidence"],
-  "scoreCeiling": "2-3 sentences on what constrains score and what would move it higher",
-  "openQuestions": ["DD question 1", "DD question 2", "DD question 3"],
-  "investmentView": "3-4 sentence AQL perspective — BUY/PURSUE/WATCH/PASS with rationale"
+  "keyStrengths": [
+    "Strength 1: Specific strength with quantified evidence and competitive comparison",
+    "Strength 2: Specific strength with quantified evidence and competitive comparison", 
+    "Strength 3: Specific strength with quantified evidence and competitive comparison"
+  ],
+  "keyRisks": [
+    "Risk 1: Specific risk with probability assessment and mitigation path",
+    "Risk 2: Specific risk with probability assessment and mitigation path",
+    "Risk 3: Specific risk with probability assessment and mitigation path"
+  ],
+  "scoreCeiling": "3-4 sentences: What constrains current score (specific gaps), what would move score higher (specific improvements needed), score trajectory forecast (up/flat/down), ceiling estimate (max achievable score)",
+  "openQuestions": [
+    "DD Question 1: Specific question with why it matters and how to answer",
+    "DD Question 2: Specific question with why it matters and how to answer",
+    "DD Question 3: Specific question with why it matters and how to answer"
+  ],
+  "investmentView": "4-5 sentence AQL perspective: Clear BUY/PURSUE/WATCH/PASS recommendation, rationale with evidence, valuation sensitivity, risk-reward assessment, catalysts to monitor"
 }
 
 CRITICAL: Return ONLY the JSON object. No markdown fences, no explanation.`;
+}
 }
 
 // ── GAMMA CONTENT BUILDER ──
